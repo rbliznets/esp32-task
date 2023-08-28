@@ -1,0 +1,29 @@
+menu "Tasks"
+
+    config DEBUG_CODE
+        bool "Enable print debug information."
+        default n
+        help
+            Info to console.
+
+    config TRACE_AUTO_RESET
+        depends on DEBUG_CODE
+        bool "Time regenerate"
+        default y
+        help
+            Reset timer after each trace.
+
+    config TRACE_USEC
+        depends on DEBUG_CODE
+        bool "Time in usec"
+        default n
+        help
+            Print time only in usec.
+                
+    config EXT_CHECK
+        depends on DEBUG_CODE
+        bool "Enable asserts."
+        default n
+        help
+            Extendent check parameters.
+endmenu
