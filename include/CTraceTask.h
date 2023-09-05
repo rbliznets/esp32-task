@@ -49,7 +49,7 @@ protected:
 	  \param[in] time Сообщение об ошибке.
 	  \param[in] n количество для усреднения.
 	*/
-	void printHeader(uint64_t time, uint32_t n = 1);
+	virtual void printHeader(uint64_t time, uint32_t n = 1);
 	/// Распечатать массив данных
 	/*!
 	  \param[in] strError Сообщение об ошибке.
@@ -97,72 +97,72 @@ protected:
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE_STRING или MSG_TRACE_STRING_REBOOT.
 	*/
-    void printString(char* data);
+    virtual void printString(char* data);
 	/// Вывести сообщение об интервале времени.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_STOP_TIME.
 	*/
-	void printStop(char* data);
+	virtual void printStop(char* data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE_UINT8.
 	*/
-	void printData8h(char* data);
+	virtual void printData8h(char* data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE2_UINT8.
 	*/
-	void printData8h_2(char* data);
+	virtual void printData8h_2(char* data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE_UINT16.
 	*/
-	void printData16h(char* data);
+	virtual void printData16h(char* data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE2_UINT16.
 	*/
-	void printData16h_2(char* data);
+	virtual void printData16h_2(char* data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE_UINT32.
 	*/
-	void printData32h(char* data);
+	virtual void printData32h(char* data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE2_UINT32.
 	*/
-	void printData32h_2(char* data);
+	virtual void printData32h_2(char* data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE_INT8.
 	*/
-	void printData8(char* data);
+	virtual void printData8(char* data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE2_INT8.
 	*/
-	void printData8_2(char* data);
+	virtual void printData8_2(char* data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE_INT16.
 	*/
-	void printData16(char* data);
+	virtual void printData16(char* data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE2_INT16.
 	*/
-	void printData16_2(char* data);
+	virtual void printData16_2(char* data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE_INT32.
 	*/
-	void printData32(char* data);
+	virtual void printData32(char* data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE2_INT32.
 	*/
-	void printData32_2(char* data);
+	virtual void printData32_2(char* data);
 
 public:
 	/// Единственный экземпляр класса.
@@ -182,7 +182,7 @@ public:
 	  \param[in] queueLength Максимальная длина очереди сообщений.
 	  \param[in] coreID Ядро CPU (0,1).
 	*/
-    void init(UBaseType_t queueLength = 30, BaseType_t coreID = 1)
+    virtual void init(UBaseType_t queueLength = 30, BaseType_t coreID = 1)
     {
         CBaseTask::init("trace", 2048+1024, 0, queueLength, coreID);
     };
