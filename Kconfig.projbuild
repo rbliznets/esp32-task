@@ -6,6 +6,43 @@ menu "Tasks"
         help
             Info to console.
 
+    choice
+        depends on DEBUG_CODE
+        prompt "Choose default tracing"
+        default DEBUG_TRACE_NONE
+        help
+            Chose to print tracing messages from.
+
+        config DEBUG_TRACE_NONE
+            bool "None"
+            help
+                Don't print tracing messages.
+
+        config DEBUG_TRACE_PRINT
+            bool "Print"
+            help
+                Imidiately print tracing messages.
+
+        config DEBUG_TRACE_TASK
+            bool "Print from task"
+            help
+                Print tracing messages from the task.
+
+    endchoice
+
+    choice
+        depends on DEBUG_TRACE_TASK
+        prompt "Choose core for the trace task"
+        default DEBUG_TRACE_TASK1
+
+        config DEBUG_TRACE_TASK0
+            bool "core 0"
+
+        config DEBUG_TRACE_TASK1
+            bool "core 1"
+
+    endchoice
+        
     config TRACE_AUTO_RESET
         depends on DEBUG_CODE
         bool "Time regenerate"

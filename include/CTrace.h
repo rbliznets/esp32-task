@@ -2,7 +2,7 @@
 	\file
 	\brief Вывод сообщения об ошибке.
 	\authors Близнец Р.А.
-	\version 1.2.0.0
+	\version 1.2.1.0
 	\date 10.07.2020
 */
 
@@ -94,6 +94,8 @@
 /// Очистить список
 #define CLEARLOGS() traceLog.clear();
 
+#define INIT_TRACE() traceLog.init();
+
 #else
 #define LOG(str)	
 #define PRINT(str)	
@@ -111,6 +113,8 @@
 #define ADDLOG(log)	
 #define REMOVELOG(log)	
 #define CLEARLOGS() 
+
+#define INIT_TRACE()
 #endif
 
 
@@ -125,6 +129,9 @@ public:
 	CTraceList();
 	/// Деструктор
 	virtual ~CTraceList();
+
+	/// Начальная инициализация по умолчанию
+	void init();
 
 	/// Виртуальный метод трассировки
 	/*!

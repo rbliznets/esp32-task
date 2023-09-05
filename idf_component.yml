@@ -1,4 +1,4 @@
-version: "1.0.0"
+version: "1.0.1"
 description: task template and trace
 url: https://github.com/rbliznets/esp32-task
 dependencies:

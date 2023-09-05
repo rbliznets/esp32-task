@@ -2,23 +2,29 @@
 	\file
 	\brief Вывод сообщения об ошибке.
 	\authors Близнец Р.А.
-	\version 1.2.0.0
+	\version 1.2.1.0
 	\date 10.07.2020
 */
 
 #include "CTrace.h"
 #include "esp_system.h"
+#include "esp_log.h"
+#include "CPrintLog.h"
+#include "CTraceTask.h"
 
 #ifdef CONFIG_DEBUG_CODE
 /// лог ошибок
 CTraceList traceLog;
+#endif
+#ifdef CONFIG_DEBUG_TRACE_PRINT
+CPrintLog tracePrintLog;
 #endif
 
 CTraceList::CTraceList():ITraceLog(),CLock()
 {
     if(esp_timer_early_init() != ESP_OK)
     {
-       printf("esp_timer_early_init error.\n");
+       ESP_LOGE("CTraceList","esp_timer_early_init error");
     }
 	vSemaphoreCreateBinary( mMutex );
 }
@@ -27,6 +33,21 @@ CTraceList::~CTraceList()
 {
 	clear();
 	vSemaphoreDelete( mMutex );
+}
+
+void CTraceList::init()
+{
+#ifdef CONFIG_DEBUG_TRACE_PRINT
+	ADDLOG(&tracePrintLog);
+#endif
+#ifdef CONFIG_DEBUG_TRACE_TASK
+#ifdef DEBUG_TRACE_TASK0
+    CTraceTask::Instance()->init(30,0);
+#else
+    CTraceTask::Instance()->init(30,1);
+#endif
+    ADDLOG(CTraceTask::Instance());
+#endif
 }
 
 void CTraceList::clear()
@@ -51,7 +72,7 @@ void CTraceList::trace(const char* strError, int32_t errCode, bool reboot)
 
 	if(reboot)
 	{
-		std::printf("trace reboot...\n");
+		ESP_LOGW("CTraceList","trace reboot...");
 		vTaskDelay(pdMS_TO_TICKS(1000));
 		esp_restart();
 	}
