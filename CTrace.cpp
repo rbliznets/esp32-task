@@ -41,7 +41,7 @@ void CTraceList::init()
 	ADDLOG(&tracePrintLog);
 #endif
 #ifdef CONFIG_DEBUG_TRACE_TASK
-#ifdef DEBUG_TRACE_TASK0
+#ifdef CONFIG_DEBUG_TRACE_TASK0
     CTraceTask::Instance()->init(30,0);
 #else
     CTraceTask::Instance()->init(30,1);
