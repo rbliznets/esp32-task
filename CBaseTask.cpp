@@ -2,24 +2,24 @@
 	\file
 	\brief Базовый класс для реализации задачи FreeRTOS в многоядерном CPU.
 	\authors Близнец Р.А.
-	\version 1.1.0.0
+	\version 1.1.0.1
 	\date 28.04.2020
 */
 
 #include "CBaseTask.h"
 #include <cstdio>
 #include <cstring>
-#include "CTrace.h"
 #include "sdkconfig.h"
+#include "esp_log.h"
+
+static const char *TAG = "BaseTask";
 
 void CBaseTask::vTask( void *pvParameters )
 {
 	((CBaseTask*)pvParameters)->run();
 	vQueueDelete(((CBaseTask*)pvParameters)->mTaskQueue);
 	((CBaseTask*)pvParameters)->mTaskQueue=nullptr;
-#ifdef CONFIG_DEBUG_CODE
-	TRACE("Task exit",0,false);
-#endif
+	ESP_LOGI(TAG, "%s exit", pcTaskGetName(((CBaseTask*)pvParameters)->mTaskHandle));
 #if (INCLUDE_vTaskDelete == 1)//????
 	((CBaseTask*)pvParameters)->mTaskHandle=nullptr;
 	vTaskDelete(nullptr);
@@ -66,11 +66,7 @@ bool CBaseTask::sendMessage(STaskMessage* msg,uint32_t nFlag, TickType_t xTicksT
 	else
 	{
 		if(free_mem) vPortFree(msg->msgBody);
-#ifdef CONFIG_DEBUG_CODE
-		char str[48];
-		std::sprintf(str,"%s:SendMessage failed",pcTaskGetName(mTaskHandle));
-		TRACE(str,msg->msgID,false);
-#endif
+		ESP_LOGW(TAG,"%s:SendMessage failed",pcTaskGetName(mTaskHandle));
 		return false;
 	}
 }
@@ -91,11 +87,7 @@ bool CBaseTask::sendMessageFront(STaskMessage* msg,uint32_t nFlag, TickType_t xT
 	else
 	{
 		if(free_mem) vPortFree(msg->msgBody);
-#ifdef CONFIG_DEBUG_CODE
-		char str[48];
-		std::sprintf(str,"%s:SendMessage failed",pcTaskGetName(mTaskHandle));
-		TRACE(str,msg->msgID,false);
-#endif
+		ESP_LOGW(TAG,"%s:SendMessage failed",pcTaskGetName(mTaskHandle));
 		return false;
 	}
 }
