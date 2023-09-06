@@ -9,7 +9,9 @@
 
 #include "CSoftwareTimer.h"
 #include <cstdio>
-#include "CTrace.h"
+#include "esp_log.h"
+
+static const char *TAG = "SoftwareTimer";
 
 void CSoftwareTimer::vTimerCallback( TimerHandle_t xTimer )
 {
@@ -23,9 +25,7 @@ int CSoftwareTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 	{
 		if(xTimerStop(mTimerHandle, 0) != pdTRUE)
 		{
-#ifdef CONFIG_DEBUG_CODE
-			TRACE("CSoftwareTimer::Start xTimerStop failed",period,false);
-#endif
+			ESP_LOGE(TAG,"xTimerStop failed (%ld)",period);
 			return -3;
 		}
 		vTimerSetReloadMode(mTimerHandle, mAutoRefresh);
@@ -35,9 +35,7 @@ int CSoftwareTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 		}
 		else
 		{
-#ifdef CONFIG_DEBUG_CODE
-			TRACE("CSoftwareTimer::Start xTimerChangePeriod failed",period,false);
-#endif
+			ESP_LOGE(TAG,"xTimerChangePeriod failed (%ld)",period);
 			return -4;
 		}
 	}
@@ -55,17 +53,13 @@ int CSoftwareTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 			}
 			else
 			{
-#ifdef CONFIG_DEBUG_CODE
-				TRACE("CSoftwareTimer::Start xTimerStart failed",period,false);
-#endif
+				ESP_LOGE(TAG,"xTimerStart failed (%ld)",period);
 				return -2;
 			}
 		}
 		else
 		{
-#ifdef CONFIG_DEBUG_CODE
-			TRACE("CSoftwareTimer::Start xTimerCreate failed",period,false);
-#endif
+			ESP_LOGE(TAG,"xTimerCreate failed (%ld)",period);
 			return -1;
 		}
 	}
@@ -84,25 +78,19 @@ int CSoftwareTimer::stop()
 			}
 			else
 			{
-#ifdef CONFIG_DEBUG_CODE
-				TRACE("CSoftwareTimer::Stop xTimerDelete failed",0,false);
-#endif
+				ESP_LOGE(TAG,"xTimerDelete failed");
 				return -3;
 			}
 		}
 		else
 		{
-#ifdef CONFIG_DEBUG_CODE
-			TRACE("CSoftwareTimer::Stop xTimerStop failed",0,false);
-#endif
+			ESP_LOGE(TAG,"xTimerStop failed");
 			return -2;
 		}
 	}
 	else
 	{
-#ifdef CONFIG_DEBUG_CODE
-		//TRACE("CSoftwareTimer::Stop mTimerHandle==NULL",0,false);
-#endif
+		ESP_LOGI(TAG,"mTimerHandle==NULL");
 		return -1;
 	}
 }
@@ -115,12 +103,10 @@ void CSoftwareTimer::timer()
 		{
 			mTimerHandle=nullptr;
 		}
-#ifdef CONFIG_DEBUG_CODE
 		else
 		{
-			TRACE("CSoftwareTimer::Timer xTimerDelete failed",0,false);
+			ESP_LOGE(TAG,"xTimerDelete failed");
 		}
-#endif
 	}
 	xTaskNotify(mTaskToNotify,(1 << mNotifyBit),eSetBits);
 }

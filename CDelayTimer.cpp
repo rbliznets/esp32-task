@@ -2,13 +2,15 @@
 	\file
 	\brief Аппаратный таймер под задачи FreeRTOS.
 	\authors Близнец Р.А.
-	\version 1.0.0.0
+	\version 1.0.0.1
 	\date 31.03.2023
 */
 
 #include "CDelayTimer.h"
 #include <cstdio>
-#include "CTrace.h"
+#include "esp_log.h"
+
+static const char *TAG = "DelayTimer";
 
 bool IRAM_ATTR CDelayTimer::timer_on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
 {
@@ -28,14 +30,14 @@ int CDelayTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 		m_alarm_config.flags.auto_reload_on_alarm = autoRefresh;
 		if(gptimer_set_alarm_action(mTimerHandle, &m_alarm_config) != ESP_OK)
 		{
-			TRACE("CDelayTimer::gptimer_set_alarm_action failed",xNotifyBit,false);
+			ESP_LOGE(TAG,"gptimer_set_alarm_action failed");
 			gptimer_del_timer(mTimerHandle);
 			mTimerHandle=nullptr;
 			return -3;
 		}
 		if(gptimer_start(mTimerHandle) != ESP_OK)
 		{
-			TRACE("CDelayTimer::gptimer_start failed",xNotifyBit,false);
+			ESP_LOGE(TAG,"gptimer_start failed");
 			gptimer_disable(mTimerHandle);
 			gptimer_del_timer(mTimerHandle);
 			mTimerHandle=nullptr;
@@ -47,12 +49,12 @@ int CDelayTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 	{
 		if(gptimer_new_timer(&mTimer_config, &mTimerHandle) != ESP_OK)
 		{
-			TRACE("CDelayTimer::gptimer_new_timer failed",xNotifyBit,false);
+			ESP_LOGE(TAG,"gptimer_new_timer failed");
 			return -1;
 		}
 		if(gptimer_register_event_callbacks(mTimerHandle, &m_cbs, this) != ESP_OK)
 		{
-			TRACE("CDelayTimer::gptimer_register_event_callbacks failed",xNotifyBit,false);
+			ESP_LOGE(TAG,"gptimer_register_event_callbacks failed");
 			gptimer_del_timer(mTimerHandle);
 			mTimerHandle=nullptr;
 			return -2;
@@ -63,21 +65,21 @@ int CDelayTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 		m_alarm_config.flags.auto_reload_on_alarm = autoRefresh;
 		if(gptimer_set_alarm_action(mTimerHandle, &m_alarm_config) != ESP_OK)
 		{
-			TRACE("CDelayTimer::gptimer_set_alarm_action failed",xNotifyBit,false);
+			ESP_LOGE(TAG,"gptimer_set_alarm_action failed");
 			gptimer_del_timer(mTimerHandle);
 			mTimerHandle=nullptr;
 			return -3;
 		}
 		if(gptimer_enable(mTimerHandle) != ESP_OK)
 		{
-			TRACE("CDelayTimer::gptimer_enable failed",xNotifyBit,false);
+			ESP_LOGE(TAG,"gptimer_enable failed");
 			gptimer_del_timer(mTimerHandle);
 			mTimerHandle=nullptr;
 			return -4;
 		}
 		if(gptimer_start(mTimerHandle) != ESP_OK)
 		{
-			TRACE("CDelayTimer::gptimer_start failed",xNotifyBit,false);
+			ESP_LOGE(TAG,"gptimer_start failed");
 			gptimer_disable(mTimerHandle);
 			gptimer_del_timer(mTimerHandle);
 			mTimerHandle=nullptr;
@@ -99,9 +101,7 @@ int CDelayTimer::stop()
 	}
 	else
 	{
-#ifdef CONFIG_DEBUG_CODE
-		TRACE("CDelayTimer::Stop mTimerHandle==NULL",0,false);
-#endif
+		ESP_LOGI(TAG,"mTimerHandle==NULL");
 		return -1;
 	}
 	return 0;

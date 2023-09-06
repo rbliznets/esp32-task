@@ -20,11 +20,13 @@ CTraceList traceLog;
 CPrintLog tracePrintLog;
 #endif
 
+static const char *TAG = "TraceList";
+
 CTraceList::CTraceList():ITraceLog(),CLock()
 {
     if(esp_timer_early_init() != ESP_OK)
     {
-       ESP_LOGE("CTraceList","esp_timer_early_init error");
+       ESP_LOGE(TAG,"esp_timer_early_init error");
     }
 	vSemaphoreCreateBinary( mMutex );
 }
@@ -72,7 +74,7 @@ void CTraceList::trace(const char* strError, int32_t errCode, bool reboot)
 
 	if(reboot)
 	{
-		ESP_LOGW("CTraceList","trace reboot...");
+		ESP_LOGW(TAG,"trace reboot...");
 		vTaskDelay(pdMS_TO_TICKS(1000));
 		esp_restart();
 	}
