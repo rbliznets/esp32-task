@@ -16,7 +16,7 @@
 #ifdef CONFIG_TRACE_AUTO_RESET
 #define AUTO_TIMER CONFIG_TRACE_AUTO_RESET
 #else
-#define AUTO_TIMER true
+#define AUTO_TIMER false
 #endif
 
 void CTraceTask::printHeader(uint64_t time, uint32_t n)
