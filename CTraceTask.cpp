@@ -566,13 +566,14 @@ void  CTraceTask::stopTime(const char* str, uint32_t n)
 void CTraceTask::log(const char *str)
 {
 	STaskMessage msg;
-	char* dt=(char*)allocNewMsg(&msg, MSG_PRINT_STRING, std::strlen(str)+1);
 	if(str != nullptr)
 	{
+		char* dt=(char*)allocNewMsg(&msg, MSG_PRINT_STRING, std::strlen(str)+1);
 		std::strcpy(dt, str);
 	}
 	else
 	{
+		char* dt=(char*)allocNewMsg(&msg, MSG_PRINT_STRING, 1);
 		dt[0]=0;
 	}
 	sendMessage(&msg, 0, true);
