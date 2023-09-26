@@ -66,7 +66,7 @@ bool CBaseTask::sendMessage(STaskMessage* msg,uint32_t nFlag, TickType_t xTicksT
 	else
 	{
 		if(free_mem) vPortFree(msg->msgBody);
-		ESP_LOGW(TAG,"%s:SendMessage failed",pcTaskGetName(mTaskHandle));
+		ESP_LOGW(TAG,"%s:SendMessage failed %d",pcTaskGetName(mTaskHandle),msg->msgID);
 		return false;
 	}
 }
@@ -87,7 +87,7 @@ bool CBaseTask::sendMessageFront(STaskMessage* msg,uint32_t nFlag, TickType_t xT
 	else
 	{
 		if(free_mem) vPortFree(msg->msgBody);
-		ESP_LOGW(TAG,"%s:SendMessage failed",pcTaskGetName(mTaskHandle));
+		ESP_LOGW(TAG,"%s:sendMessageFront failed %d",pcTaskGetName(mTaskHandle),msg->msgID);
 		return false;
 	}
 }
