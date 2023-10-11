@@ -24,6 +24,7 @@ protected:
 		.clk_src = GPTIMER_CLK_SRC_DEFAULT,
 		.direction = GPTIMER_COUNT_UP,
     	.resolution_hz = 1 * 1000 * 1000, // 1MHz, 1 tick = 1us
+		.flags = {0}
 	};
 	gptimer_alarm_config_t m_alarm_config = {
 		.alarm_count = 1000000, // period = 1s @resolution 1MHz

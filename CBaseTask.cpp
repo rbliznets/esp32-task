@@ -92,7 +92,7 @@ bool CBaseTask::sendMessageFront(STaskMessage* msg,uint32_t nFlag, TickType_t xT
 	}
 }
 
-bool IRAM_ATTR CBaseTask::sendMessageFromISR(STaskMessage* msg, BaseType_t *pxHigherPriorityTaskWoken,uint32_t nFlag)
+bool CBaseTask::sendMessageFromISR(STaskMessage* msg, BaseType_t *pxHigherPriorityTaskWoken,uint32_t nFlag)
 {
 #ifdef CONFIG_EXT_CHECK
 	configASSERT(msg !=  nullptr);

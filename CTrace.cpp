@@ -80,7 +80,7 @@ void CTraceList::trace(const char* strError, int32_t errCode, bool reboot)
 	}
 }
 
-void IRAM_ATTR CTraceList::traceFromISR(const char* strError, int32_t errCode, bool reboot, BaseType_t *pxHigherPriorityTaskWoken)
+void CTraceList::traceFromISR(const char* strError, int32_t errCode, bool reboot, BaseType_t *pxHigherPriorityTaskWoken)
 {
 	//lock();
 	for( auto x : m_list)

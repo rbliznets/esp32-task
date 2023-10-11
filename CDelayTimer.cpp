@@ -107,7 +107,7 @@ int CDelayTimer::stop()
 	return 0;
 }
 
-void IRAM_ATTR CDelayTimer::timer()
+void CDelayTimer::timer()
 {
 	xTaskNotify(mTaskToNotify,(1 << mNotifyBit),eSetBits);
 	if (m_alarm_config.flags.auto_reload_on_alarm == 0)

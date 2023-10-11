@@ -400,7 +400,7 @@ void CTraceTask::trace(const char* strError, int32_t errCode, bool reboot)
 	}
 }
 
-void IRAM_ATTR CTraceTask::traceFromISR(const char* strError, int32_t errCode, bool reboot, BaseType_t *pxHigherPriorityTaskWoken)
+void CTraceTask::traceFromISR(const char* strError, int32_t errCode, bool reboot, BaseType_t *pxHigherPriorityTaskWoken)
 {
 	STaskMessage msg;
     taskENTER_CRITICAL_ISR(&mMut);
@@ -486,30 +486,6 @@ void CTraceTask::traceData2(const char* strError, void* data, uint32_t size, uin
     taskENTER_CRITICAL(&mMut);
 	uint64_t tm=getTimer(AUTO_TIMER);
     taskEXIT_CRITICAL(&mMut);
-
-	int sz=1;
-	switch(tp)
-	{
-	case MSG_TRACE2_INT8:
-		sz=sizeof(int8_t);
-		break;
-	case MSG_TRACE2_UINT16:
-		sz=sizeof(uint16_t);
-		break;
-	case MSG_TRACE2_INT16:
-		sz=sizeof(int16_t);
-		break;
-	case MSG_TRACE2_UINT32:
-		sz=sizeof(uint32_t);
-		break;
-	case MSG_TRACE2_INT32:
-		sz=sizeof(int32_t);
-		break;
-	default:
-		sz=sizeof(uint8_t);
-		break;
-	}
-
 	int ln=8+4+4+1;
 	if(strError!=nullptr)
 	{
