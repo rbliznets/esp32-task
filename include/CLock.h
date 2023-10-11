@@ -9,15 +9,8 @@
 #if !defined CLOCK_H
 #define CLOCK_H
 
-/*!
-    \addtogroup f_tasks
-
-   	@{
-*/
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
-
 
 /// Базовый класс для захвата ресурса.
 class CLock
@@ -31,18 +24,17 @@ protected:
 	*/
 	void init(SemaphoreHandle_t mutex)
 	{
-		mMutex=mutex;
+		mMutex = mutex;
 	};
-	
+
 	/// Захват ресурса.
 	void lock();
 	/// Освобождение ресурса.
 	void unlock();
+
 public:
 	/// Конструктор класса.
 	CLock();
 };
-/*! @} */
 
 #endif // CLOCK_H
-

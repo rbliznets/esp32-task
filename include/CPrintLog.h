@@ -11,13 +11,8 @@
 
 #include "ITraceLog.h"
 
-/*! \addtogroup  debug
-
-    @{
-*/
-
 /// Класс трассировки сообщения об ошибке для консоли
-class CPrintLog: public ITraceLog
+class CPrintLog : public ITraceLog
 {
 protected:
 	/// Вывести интрвал времени с предыдущего собщения
@@ -29,7 +24,7 @@ protected:
 
 public:
 	/// Конструктор
-	CPrintLog():ITraceLog()	{};
+	CPrintLog() : ITraceLog(){};
 	/// Виртуальный деструктор
 	virtual ~CPrintLog() = default;
 
@@ -91,18 +86,18 @@ public:
 	  \param[in] str название интервала.
 	  \param[in] n количество для усреднения.
 	*/
-	void stopTime(const char *str, uint32_t n=1) override;
-	
+	void stopTime(const char *str, uint32_t n = 1) override;
+
 	/// Вывести сообщение
 	/*!
 	  \param[in] str Сообщение.
 	*/
 	inline void log(const char *str) override
 	{
-		if(str != nullptr)std::printf(str);
+		if (str != nullptr)
+			std::printf(str);
 		std::printf("\n");
 	};
 };
-/*! @} */
 
-#endif //CPRINTLOG_H
+#endif // CPRINTLOG_H

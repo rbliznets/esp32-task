@@ -14,10 +14,12 @@ CLock::CLock()
 
 void CLock::lock()
 {
-	if(mMutex != NULL)xSemaphoreTake(mMutex, portMAX_DELAY);
+	if (mMutex != nullptr)
+		xSemaphoreTake(mMutex, portMAX_DELAY);
 }
 
 void CLock::unlock()
 {
-	if(mMutex != NULL)xSemaphoreGive(mMutex);
+	if (mMutex != nullptr)
+		xSemaphoreGive(mMutex);
 }

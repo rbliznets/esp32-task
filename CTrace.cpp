@@ -22,19 +22,19 @@ CPrintLog tracePrintLog;
 
 static const char *TAG = "TraceList";
 
-CTraceList::CTraceList():ITraceLog(),CLock()
+CTraceList::CTraceList() : ITraceLog(), CLock()
 {
-    if(esp_timer_early_init() != ESP_OK)
-    {
-       ESP_LOGE(TAG,"esp_timer_early_init error");
-    }
-	vSemaphoreCreateBinary( mMutex );
+	if (esp_timer_early_init() != ESP_OK)
+	{
+		ESP_LOGE(TAG, "esp_timer_early_init error");
+	}
+	vSemaphoreCreateBinary(mMutex);
 }
 
 CTraceList::~CTraceList()
 {
 	clear();
-	vSemaphoreDelete( mMutex );
+	vSemaphoreDelete(mMutex);
 }
 
 void CTraceList::init()
@@ -44,18 +44,18 @@ void CTraceList::init()
 #endif
 #ifdef CONFIG_DEBUG_TRACE_TASK
 #ifdef CONFIG_DEBUG_TRACE_TASK0
-    CTraceTask::Instance()->init(30,0);
+	CTraceTask::Instance()->init(30, 0);
 #else
-    CTraceTask::Instance()->init(30,1);
+	CTraceTask::Instance()->init(30, 1);
 #endif
-    ADDLOG(CTraceTask::Instance());
+	ADDLOG(CTraceTask::Instance());
 #endif
 }
 
 void CTraceList::clear()
 {
 	lock();
-	for( auto x : m_list)
+	for (auto x : m_list)
 	{
 		delete x;
 	}
@@ -63,87 +63,87 @@ void CTraceList::clear()
 	unlock();
 }
 
-void CTraceList::trace(const char* strError, int32_t errCode, bool reboot)
+void CTraceList::trace(const char *strError, int32_t errCode, bool reboot)
 {
 	lock();
-	for( auto x : m_list)
+	for (auto x : m_list)
 	{
 		x->trace(strError, errCode, reboot);
 	}
 	unlock();
 
-	if(reboot)
+	if (reboot)
 	{
-		ESP_LOGW(TAG,"trace reboot...");
+		ESP_LOGW(TAG, "trace reboot...");
 		vTaskDelay(pdMS_TO_TICKS(1000));
 		esp_restart();
 	}
 }
 
-void CTraceList::traceFromISR(const char* strError, int32_t errCode, bool reboot, BaseType_t *pxHigherPriorityTaskWoken)
+void CTraceList::traceFromISR(const char *strError, int32_t errCode, bool reboot, BaseType_t *pxHigherPriorityTaskWoken)
 {
-	//lock();
-	for( auto x : m_list)
+	// lock();
+	for (auto x : m_list)
 	{
 		x->traceFromISR(strError, errCode, reboot, pxHigherPriorityTaskWoken);
 	}
-	//unlock();
+	// unlock();
 }
 
-void CTraceList::trace(const char* strError, uint8_t* data, uint32_t size)
+void CTraceList::trace(const char *strError, uint8_t *data, uint32_t size)
 {
 	lock();
-	for( auto x : m_list)
+	for (auto x : m_list)
 	{
 		x->trace(strError, data, size);
 	}
 	unlock();
 }
 
-void CTraceList::trace(const char* strError, int8_t* data, uint32_t size)
+void CTraceList::trace(const char *strError, int8_t *data, uint32_t size)
 {
 	lock();
-	for( auto x : m_list)
+	for (auto x : m_list)
 	{
 		x->trace(strError, data, size);
 	}
 	unlock();
 }
 
-void CTraceList::trace(const char* strError, uint16_t* data, uint32_t size)
+void CTraceList::trace(const char *strError, uint16_t *data, uint32_t size)
 {
 	lock();
-	for( auto x : m_list)
+	for (auto x : m_list)
 	{
 		x->trace(strError, data, size);
 	}
 	unlock();
 }
 
-void CTraceList::trace(const char* strError, int16_t* data, uint32_t size)
+void CTraceList::trace(const char *strError, int16_t *data, uint32_t size)
 {
 	lock();
-	for( auto x : m_list)
+	for (auto x : m_list)
 	{
 		x->trace(strError, data, size);
 	}
 	unlock();
 }
 
-void CTraceList::trace(const char* strError, uint32_t* data, uint32_t size)
+void CTraceList::trace(const char *strError, uint32_t *data, uint32_t size)
 {
 	lock();
-	for( auto x : m_list)
+	for (auto x : m_list)
 	{
 		x->trace(strError, data, size);
 	}
 	unlock();
 }
 
-void CTraceList::trace(const char* strError, int32_t* data, uint32_t size)
+void CTraceList::trace(const char *strError, int32_t *data, uint32_t size)
 {
 	lock();
-	for( auto x : m_list)
+	for (auto x : m_list)
 	{
 		x->trace(strError, data, size);
 	}
@@ -153,7 +153,7 @@ void CTraceList::trace(const char* strError, int32_t* data, uint32_t size)
 void CTraceList::log(const char *str)
 {
 	lock();
-	for( auto x : m_list)
+	for (auto x : m_list)
 	{
 		x->log(str);
 	}
@@ -163,31 +163,31 @@ void CTraceList::log(const char *str)
 void CTraceList::startTime()
 {
 	lock();
-	for( auto x : m_list)
+	for (auto x : m_list)
 	{
 		x->startTime();
 	}
 	unlock();
 }
 
-void CTraceList::stopTime(const char* str, uint32_t n)
+void CTraceList::stopTime(const char *str, uint32_t n)
 {
 	lock();
-	for( auto x : m_list)
+	for (auto x : m_list)
 	{
 		x->stopTime(str, n);
 	}
 	unlock();
 }
 
-void CTraceList::add(ITraceLog* log)
+void CTraceList::add(ITraceLog *log)
 {
 	lock();
 	m_list.push_back(log);
 	unlock();
 }
 
-void CTraceList::remove(ITraceLog* log)
+void CTraceList::remove(ITraceLog *log)
 {
 	lock();
 	m_list.remove(log);

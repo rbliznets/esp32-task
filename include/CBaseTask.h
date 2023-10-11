@@ -9,19 +9,6 @@
 #if !defined CBASETASK_H
 #define CBASETASK_H
 
-/*! \defgroup freertos FreeRTOS
-  	\ingroup Algorithms
-  	\brief Алгоритмы, связанные с FreeRTOS.
-*/
-
-/*!
-    \defgroup f_tasks Задачи
-  	\ingroup freertos
-    \brief Данный модуль предназначен для кода задач FreeRTOS.
-
-   	@{
-*/
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -29,17 +16,17 @@
 /// Структура сообщения между задачами.
 struct STaskMessage
 {
-	uint16_t msgID;			///< Тип сообщения.
-	uint16_t shortParam;	///< Параметр команды.
+	uint16_t msgID;		 ///< Тип сообщения.
+	uint16_t shortParam; ///< Параметр команды.
 	union
 	{
 		struct
 		{
-			uint16_t param1;	///< Параметр сообщения.
-			uint16_t param2;	///< Параметр сообщения.
+			uint16_t param1; ///< Параметр сообщения.
+			uint16_t param2; ///< Параметр сообщения.
 		};
-		uint32_t paramID;	///< Параметр сообщения.
-		void *msgBody;		///< Указатель на тело сообщение.
+		uint32_t paramID; ///< Параметр сообщения.
+		void *msgBody;	  ///< Указатель на тело сообщение.
 	};
 };
 
@@ -47,17 +34,17 @@ struct STaskMessage
 class CBaseTask
 {
 protected:
-	TaskHandle_t mTaskHandle=nullptr; ///< Хэндлер задачи FreeRTOS.
-	QueueHandle_t mTaskQueue=nullptr; ///< Приемная очередь сообщений.
+	TaskHandle_t mTaskHandle = nullptr; ///< Хэндлер задачи FreeRTOS.
+	QueueHandle_t mTaskQueue = nullptr; ///< Приемная очередь сообщений.
 
 	/// Функция задачи FreeRTOS.
 	/*!
 	  \param[in] pvParameters Параметр (указатель на объект CBaseTask).
 	*/
-	static void vTask( void *pvParameters );
+	static void vTask(void *pvParameters);
 
 	/// Функция задачи для переопределения в потомках.
-	virtual void run()=0;
+	virtual void run() = 0;
 
 	/// Получить сообщение из очереди.
 	/*!
@@ -65,7 +52,7 @@ protected:
 	  \param[in] xTicksToWait Время ожидания в тиках.
 	  \return true в случае успеха.
 	*/
-	bool getMessage(STaskMessage *msg, TickType_t xTicksToWait=0);
+	bool getMessage(STaskMessage *msg, TickType_t xTicksToWait = 0);
 
 	/// Послать сообщение в задачу.
 	/*!
@@ -75,7 +62,7 @@ protected:
 	  \param[in] free_mem вернуть память в кучу в случае неудачи.
 	  \return true в случае успеха.
 	*/
-	bool sendMessage(STaskMessage *msg, uint32_t nFlag, TickType_t xTicksToWait=0, bool free_mem=false);
+	bool sendMessage(STaskMessage *msg, uint32_t nFlag, TickType_t xTicksToWait = 0, bool free_mem = false);
 	/// Послать сообщение в задачу в начало очереди.
 	/*!
 	  \param[in] msg Указатель на сообщение.
@@ -84,7 +71,7 @@ protected:
 	  \param[in] free_mem вернуть память в кучу в случае неудачи.
 	  \return true в случае успеха.
 	*/
-	bool sendMessageFront(STaskMessage *msg, uint32_t nFlag, TickType_t xTicksToWait=0, bool free_mem=false);
+	bool sendMessageFront(STaskMessage *msg, uint32_t nFlag, TickType_t xTicksToWait = 0, bool free_mem = false);
 	/// Послать сообщение в задачу из прерывания.
 	/*!
 	  \param[in] msg Указатель на сообщение.
@@ -93,6 +80,7 @@ protected:
 	  \return true в случае успеха.
 	*/
 	bool IRAM_ATTR sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken, uint32_t nFlag);
+
 public:
 	/// Начальная инициализация.
 	/*!
@@ -102,7 +90,7 @@ public:
 	  \param[in] queueLength Максимальная длина очереди сообщений.
 	  \param[in] coreID Ядро CPU (0,1).
 	*/
-	virtual void init(const char *name,unsigned short usStack, UBaseType_t uxPriority, UBaseType_t queueLength, BaseType_t coreID=tskNO_AFFINITY);
+	virtual void init(const char *name, unsigned short usStack, UBaseType_t uxPriority, UBaseType_t queueLength, BaseType_t coreID = tskNO_AFFINITY);
 	/// Деструктор.
 	virtual ~CBaseTask();
 
@@ -112,7 +100,7 @@ public:
 	  \param[out] pxHigherPriorityTaskWoken Флаг переключения задач.
 	  \return true в случае успеха.
 	*/
-	virtual bool sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken)=0;
+	virtual bool sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken) = 0;
 	/// Послать сообщение в задачу.
 	/*!
 	  \param[in] msg Указатель на сообщение.
@@ -120,7 +108,7 @@ public:
 	  \param[in] free вернуть память в кучу в случае неудачи.
 	  \return true в случае успеха.
 	*/
-	virtual bool sendMessage(STaskMessage* msg,TickType_t xTicksToWait=0, bool free=false) = 0;
+	virtual bool sendMessage(STaskMessage *msg, TickType_t xTicksToWait = 0, bool free = false) = 0;
 	/// Послать простое сообщение в задачу.
 	/*!
 	  \param[in] msgID Тип сообщения.
@@ -144,15 +132,13 @@ public:
 	  \param[in] size Размер выделяемой памяти.
 	  \return указатель на выделенную память.
 	*/
-	static uint8_t* allocNewMsg(STaskMessage *msg, uint16_t cmd, uint16_t size);
+	static uint8_t *allocNewMsg(STaskMessage *msg, uint16_t cmd, uint16_t size);
 
 	/// Признак запущенной задачи.
 	/*!
 	  \return Признак запущенной задачи.
 	*/
-	inline bool isRun(){return mTaskQueue != nullptr;};
+	inline bool isRun() { return mTaskQueue != nullptr; };
 };
-/*! @} */
 
 #endif // CBASETASK_H
-

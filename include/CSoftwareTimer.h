@@ -17,30 +17,31 @@
 class CSoftwareTimer
 {
 protected:
-	TimerHandle_t mTimerHandle=nullptr; 	///< Хэндлер таймера FreeRTOS.
-	TaskHandle_t mTaskToNotify; 		///< Указатель на задачу, ожидающую события от таймера.
-	uint8_t mNotifyBit;					///< Номер бита для оповещения задачи о событии таймера (не более 31).
-	bool mAutoRefresh;					///< Флаг автозагрузки таймера.
+	TimerHandle_t mTimerHandle = nullptr; ///< Хэндлер таймера FreeRTOS.
+	TaskHandle_t mTaskToNotify;			  ///< Указатель на задачу, ожидающую события от таймера.
+	uint8_t mNotifyBit;					  ///< Номер бита для оповещения задачи о событии таймера (не более 31).
+	bool mAutoRefresh;					  ///< Флаг автозагрузки таймера.
 
 	/// Обработчик события таймера.
 	/*!
 	\param[in] xTimer Хэндлер таймера FreeRTOS.
 	*/
-	static void vTimerCallback( TimerHandle_t xTimer );
+	static void vTimerCallback(TimerHandle_t xTimer);
 
 	/// Функция, вызываемая по событию в таймере.
 	void timer();
+
 public:
 	/// Запуск таймера.
 	/*!
-  	  \warning Вызывать только из задачи FreeRTOS.
+	  \warning Вызывать только из задачи FreeRTOS.
 	  \param[in] xNotifyBit Номер бита для оповещения задачи о событии таймера.
 	  \param[in] period Период в миллисекундах.
 	  \param[in] autoRefresh Флаг автозагрузки таймера. Если false, то таймер запускается один раз.
 	  \return 0 - в случае успеха.
 	  \sa Stop()
 	*/
-	int start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh=false);
+	int start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh = false);
 	/// Остановка таймера.
 	/*!
 	  \return 0 - в случае успеха.
@@ -59,4 +60,3 @@ public:
 };
 
 #endif // CSOFTWARETIMER_H
-
