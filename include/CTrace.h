@@ -2,7 +2,7 @@
 	\file
 	\brief Вывод сообщения об ошибке.
 	\authors Близнец Р.А.
-	\version 1.2.1.0
+	\version 1.2.2.0
 	\date 10.07.2020
 */
 
@@ -15,7 +15,10 @@
 #include "CLock.h"
 #include <list>
 #include "esp_log.h"
+
+#ifdef CONFIG_COMPILER_CXX_RTTI
 #include <typeinfo>
+#endif 
 
 #ifdef CONFIG_DEBUG_CODE
 /// Вывод лога
@@ -97,16 +100,49 @@
 
 #define INIT_TRACE() traceLog.init();
 
+#ifdef CONFIG_COMPILER_CXX_RTTI
+/// Вывод ошибки из метода класса.
+/*!
+	\param[in] str Сообщение об ошибке.
+	\param[in] x Код ошибки.
+*/
 #define TRACE_ERROR(s,x)\
 	{                               \
 		if(std::is_base_of_v<ITraceLog,typeof(*this)>) ESP_LOGE(typeid(*this).name(), "%s: %d", s, x);\
         else traceLog.trace((char *)s, x, false);\
 	}
+/// Вывод предупреждения из метода класса.
+/*!
+	\param[in] str Сообщение об ошибке.
+	\param[in] x Код ошибки.
+*/
 #define TRACE_WARNING(s,x)\
 	{                               \
 		if(std::is_base_of_v<ITraceLog,typeof(*this)>) ESP_LOGW(typeid(*this).name(), "%s: %d", s, x);\
         else traceLog.trace((char *)s, x, false);\
 	}
+#else
+/// Вывод ошибки из метода класса.
+/*!
+	\param[in] str Сообщение об ошибке.
+	\param[in] x Код ошибки.
+*/
+#define TRACE_ERROR(s,x)\
+	{                               \
+		if(std::is_base_of_v<ITraceLog,typeof(*this)>) ESP_LOGE("Trace", "%s: %d", s, x);\
+        else traceLog.trace((char *)s, x, false);\
+	}
+/// Вывод предупреждения из метода класса.
+/*!
+	\param[in] str Сообщение об ошибке.
+	\param[in] x Код ошибки.
+*/
+#define TRACE_WARNING(s,x)\
+	{                               \
+		if(std::is_base_of_v<ITraceLog,typeof(*this)>) ESP_LOGW("Trace", "%s: %d", s, x);\
+        else traceLog.trace((char *)s, x, false);\
+	}
+#endif 
 
 #else
 #define LOG(str)
@@ -128,8 +164,33 @@
 
 #define INIT_TRACE()
 
+#ifdef CONFIG_COMPILER_CXX_RTTI
+/// Вывод ошибки из метода класса.
+/*!
+	\param[in] str Сообщение об ошибке.
+	\param[in] x Код ошибки.
+*/
 #define TRACE_ERROR(s,x) ESP_LOGE(typeid(*this), "%s: %d", s, x)
+/// Вывод предупреждения из метода класса.
+/*!
+	\param[in] str Сообщение об ошибке.
+	\param[in] x Код ошибки.
+*/
 #define TRACE_WARNING(s,x) ESP_LOGW(typeid(*this), "%s: %d", s, x)
+#else
+/// Вывод ошибки из метода класса.
+/*!
+	\param[in] str Сообщение об ошибке.
+	\param[in] x Код ошибки.
+*/
+#define TRACE_ERROR(s,x) ESP_LOGE("Trace", "%s: %d", s, x)
+/// Вывод предупреждения из метода класса.
+/*!
+	\param[in] str Сообщение об ошибке.
+	\param[in] x Код ошибки.
+*/
+#define TRACE_WARNING(s,x) ESP_LOGW("Trace", "%s: %d", s, x)
+#endif 
 #endif
 
 /// Класс списка зарегистрированных трассировщиков
