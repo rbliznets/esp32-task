@@ -9,11 +9,13 @@
 #if !defined CTRACE_H
 #define CTRACE_H
 
+#include "sdkconfig.h"
 #include <stdint.h>
 #include "ITraceLog.h"
 #include "CLock.h"
 #include <list>
-#include "sdkconfig.h"
+#include "esp_log.h"
+#include <typeinfo>
 
 #ifdef CONFIG_DEBUG_CODE
 /// Вывод лога
@@ -95,6 +97,17 @@
 
 #define INIT_TRACE() traceLog.init();
 
+#define TRACE_ERROR(s,x)\
+	{                               \
+		if(std::is_base_of_v<ITraceLog,typeof(*this)>) ESP_LOGE(typeid(*this).name(), "%s: %d", s, x);\
+        else traceLog.trace((char *)s, x, false);\
+	}
+#define TRACE_WARNING(s,x)\
+	{                               \
+		if(std::is_base_of_v<ITraceLog,typeof(*this)>) ESP_LOGW(typeid(*this).name(), "%s: %d", s, x);\
+        else traceLog.trace((char *)s, x, false);\
+	}
+
 #else
 #define LOG(str)
 #define PRINT(str)
@@ -114,6 +127,9 @@
 #define CLEARLOGS()
 
 #define INIT_TRACE()
+
+#define TRACE_ERROR(s,x) ESP_LOGE(typeid(*this), "%s: %d", s, x)
+#define TRACE_WARNING(s,x) ESP_LOGW(typeid(*this), "%s: %d", s, x)
 #endif
 
 /// Класс списка зарегистрированных трассировщиков

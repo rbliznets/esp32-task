@@ -9,9 +9,7 @@
 
 #include "CSoftwareTimer.h"
 #include <cstdio>
-#include "esp_log.h"
-
-static const char *TAG = "SoftwareTimer";
+#include "CTrace.h"
 
 void CSoftwareTimer::vTimerCallback(TimerHandle_t xTimer)
 {
@@ -25,7 +23,7 @@ int CSoftwareTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 	{
 		if (xTimerStop(mTimerHandle, 0) != pdTRUE)
 		{
-			ESP_LOGE(TAG, "xTimerStop failed (%ld)", period);
+			TRACE_ERROR("CSoftwareTimer:xTimerStop failed", (uint16_t)period);
 			return -3;
 		}
 		vTimerSetReloadMode(mTimerHandle, mAutoRefresh);
@@ -35,7 +33,7 @@ int CSoftwareTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 		}
 		else
 		{
-			ESP_LOGE(TAG, "xTimerChangePeriod failed (%ld)", period);
+			TRACE_ERROR("CSoftwareTimer:xTimerChangePeriod failed", (uint16_t)period);
 			return -4;
 		}
 	}
@@ -53,13 +51,13 @@ int CSoftwareTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 			}
 			else
 			{
-				ESP_LOGE(TAG, "xTimerStart failed (%ld)", period);
+				TRACE_ERROR("CSoftwareTimer:xTimerStart failed", (uint16_t)period);
 				return -2;
 			}
 		}
 		else
 		{
-			ESP_LOGE(TAG, "xTimerCreate failed (%ld)", period);
+			TRACE_ERROR("CSoftwareTimer:xTimerCreate failed", (uint16_t)period);
 			return -1;
 		}
 	}
@@ -78,19 +76,19 @@ int CSoftwareTimer::stop()
 			}
 			else
 			{
-				ESP_LOGE(TAG, "xTimerDelete failed");
+				TRACE_ERROR("CSoftwareTimer:xTimerDelete failed",-3);
 				return -3;
 			}
 		}
 		else
 		{
-			ESP_LOGE(TAG, "xTimerStop failed");
+			TRACE_ERROR("CSoftwareTimer:xTimerStop failed",-2);
 			return -2;
 		}
 	}
 	else
 	{
-		ESP_LOGI(TAG, "mTimerHandle==NULL");
+		ESP_LOGI("CSoftwareTimer", "mTimerHandle==NULL");
 		return -1;
 	}
 }
@@ -105,7 +103,7 @@ void CSoftwareTimer::timer()
 		}
 		else
 		{
-			ESP_LOGE(TAG, "xTimerDelete failed");
+			TRACE_ERROR("CSoftwareTimer:xTimerDelete failed",0);
 		}
 	}
 	xTaskNotify(mTaskToNotify, (1 << mNotifyBit), eSetBits);

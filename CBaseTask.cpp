@@ -10,16 +10,14 @@
 #include <cstdio>
 #include <cstring>
 #include "sdkconfig.h"
-#include "esp_log.h"
-
-static const char *TAG = "BaseTask";
+#include "CTrace.h"
 
 void CBaseTask::vTask(void *pvParameters)
 {
 	((CBaseTask *)pvParameters)->run();
 	vQueueDelete(((CBaseTask *)pvParameters)->mTaskQueue);
 	((CBaseTask *)pvParameters)->mTaskQueue = nullptr;
-	ESP_LOGI(TAG, "%s exit", pcTaskGetName(((CBaseTask *)pvParameters)->mTaskHandle));
+	ESP_LOGI(pcTaskGetName(((CBaseTask *)pvParameters)->mTaskHandle), "exit");
 #if (INCLUDE_vTaskDelete == 1) //????
 	((CBaseTask *)pvParameters)->mTaskHandle = nullptr;
 	vTaskDelete(nullptr);
@@ -70,7 +68,7 @@ bool CBaseTask::sendMessage(STaskMessage *msg, uint32_t nFlag, TickType_t xTicks
 	{
 		if (free_mem)
 			vPortFree(msg->msgBody);
-		ESP_LOGW(TAG, "%s:SendMessage failed %d", pcTaskGetName(mTaskHandle), msg->msgID);
+		TRACE_WARNING(pcTaskGetName(mTaskHandle), msg->msgID);
 		return false;
 	}
 }
@@ -93,7 +91,7 @@ bool CBaseTask::sendMessageFront(STaskMessage *msg, uint32_t nFlag, TickType_t x
 	{
 		if (free_mem)
 			vPortFree(msg->msgBody);
-		ESP_LOGW(TAG, "%s:sendMessageFront failed %d", pcTaskGetName(mTaskHandle), msg->msgID);
+		TRACE_WARNING(pcTaskGetName(mTaskHandle), msg->msgID);
 		return false;
 	}
 }

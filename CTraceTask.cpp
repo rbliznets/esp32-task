@@ -12,6 +12,7 @@
 #include "CTraceTask.h"
 #include <cstring>
 #include "esp_system.h"
+#include "CTrace.h"
 
 #ifdef CONFIG_TRACE_AUTO_RESET
 #define AUTO_TIMER CONFIG_TRACE_AUTO_RESET
@@ -128,7 +129,7 @@ void CTraceTask::run()
 			vPortFree(msg.msgBody);
 			break;
 		default:
-			std::printf("CTraceTask unknown message %d\n", msg.msgID);
+			TRACE_WARNING("CTraceTask unknown message", msg.msgID);
 			break;
 		}
 		// vTaskDelay(pdMS_TO_TICKS(250));//@@@@@@@@@@@@@@
