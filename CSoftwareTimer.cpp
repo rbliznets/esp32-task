@@ -88,7 +88,7 @@ int CSoftwareTimer::stop()
 	}
 	else
 	{
-		ESP_LOGI("CSoftwareTimer", "mTimerHandle==NULL");
+		//ESP_LOGI("CSoftwareTimer", "mTimerHandle==NULL");
 		return -1;
 	}
 }
