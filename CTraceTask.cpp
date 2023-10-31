@@ -132,7 +132,7 @@ void CTraceTask::run()
 			TRACE_WARNING("CTraceTask unknown message", msg.msgID);
 			break;
 		}
-		// vTaskDelay(pdMS_TO_TICKS(250));//@@@@@@@@@@@@@@
+		vTaskDelay(pdMS_TO_TICKS(2));//@@@@@@@@@@@@@@
 	}
 }
 

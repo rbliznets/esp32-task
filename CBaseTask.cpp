@@ -41,20 +41,18 @@ CBaseTask::~CBaseTask()
 
 void CBaseTask::init(const char *name, unsigned short usStack, UBaseType_t uxPriority, UBaseType_t queueLength, BaseType_t coreID)
 {
-#ifdef CONFIG_EXT_CHECK
-	configASSERT(uxPriority <= configMAX_PRIORITIES);
-	configASSERT(usStack >= configMINIMAL_STACK_SIZE);
-	configASSERT(std::strlen(name) < configMAX_TASK_NAME_LEN);
-#endif
+	assert(uxPriority <= configMAX_PRIORITIES);
+	assert(usStack >= configMINIMAL_STACK_SIZE);
+	assert(std::strlen(name) < configMAX_TASK_NAME_LEN);
+
 	mTaskQueue = xQueueCreate(queueLength, sizeof(STaskMessage));
 	xTaskCreatePinnedToCore(vTask, name, usStack, this, uxPriority, &mTaskHandle, coreID);
 }
 
 bool CBaseTask::sendMessage(STaskMessage *msg, uint32_t nFlag, TickType_t xTicksToWait, bool free_mem)
 {
-#ifdef CONFIG_EXT_CHECK
-	configASSERT(msg != nullptr);
-#endif
+	assert(msg != nullptr);
+
 	if (xQueueSend(mTaskQueue, msg, xTicksToWait) == pdPASS)
 	{
 		if (nFlag != 0)
@@ -75,9 +73,8 @@ bool CBaseTask::sendMessage(STaskMessage *msg, uint32_t nFlag, TickType_t xTicks
 
 bool CBaseTask::sendMessageFront(STaskMessage *msg, uint32_t nFlag, TickType_t xTicksToWait, bool free_mem)
 {
-#ifdef CONFIG_EXT_CHECK
-	configASSERT(msg != nullptr);
-#endif
+	assert(msg != nullptr);
+
 	if (xQueueSendToFront(mTaskQueue, msg, xTicksToWait) == pdPASS)
 	{
 		if (nFlag != 0)
@@ -98,9 +95,8 @@ bool CBaseTask::sendMessageFront(STaskMessage *msg, uint32_t nFlag, TickType_t x
 
 bool CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken, uint32_t nFlag)
 {
-#ifdef CONFIG_EXT_CHECK
-	configASSERT(msg != nullptr);
-#endif
+	assert(msg != nullptr);
+
 	if (xQueueSendFromISR(mTaskQueue, msg, pxHigherPriorityTaskWoken) == pdPASS)
 	{
 		if (nFlag != 0)
@@ -116,18 +112,16 @@ bool CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriori
 
 bool CBaseTask::getMessage(STaskMessage *msg, TickType_t xTicksToWait)
 {
-#ifdef CONFIG_EXT_CHECK
-	configASSERT(msg != nullptr);
-#endif
+	assert(msg != nullptr);
+
 	return (xQueueReceive(mTaskQueue, msg, xTicksToWait) == pdTRUE);
 }
 
 uint8_t *CBaseTask::allocNewMsg(STaskMessage *msg, uint16_t cmd, uint16_t size)
 {
-#ifdef CONFIG_EXT_CHECK
-	configASSERT(msg != nullptr);
-	configASSERT(size > 0);
-#endif
+	assert(msg != nullptr);
+	assert(size > 0);
+
 	msg->msgID = cmd;
 	msg->shortParam = size;
 	msg->msgBody = pvPortMalloc(msg->shortParam);
