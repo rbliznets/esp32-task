@@ -30,7 +30,7 @@ protected:
 		.reload_count = 0,		// counter will reload with 0 on alarm event
 		.flags = 0};
 
-	static bool IRAM_ATTR timer_on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx);
+	static bool timer_on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx);
 	gptimer_event_callbacks_t m_cbs = {
 		.on_alarm = timer_on_alarm_cb // register user callback
 	};
@@ -38,8 +38,9 @@ protected:
 	TaskHandle_t mTaskToNotify; ///< Указатель на задачу, ожидающую события от таймера.
 	uint8_t mNotifyBit;			///< Номер бита для оповещения задачи о событии таймера (не более 31).
 	bool mAutoRefresh;			///< Флаг автозагрузки таймера.
+	
 	/// Функция, вызываемая по событию в таймере.
-	void IRAM_ATTR timer();
+	void timer();
 
 public:
 	/// Запуск таймера.
