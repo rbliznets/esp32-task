@@ -108,12 +108,16 @@ int CDelayTimer::stop()
 
 IRAM_ATTR void CDelayTimer::timer()
 {
-	xTaskNotify(mTaskToNotify, (1 << mNotifyBit), eSetBits);
-	// if (m_alarm_config.flags.auto_reload_on_alarm == 0)
-	// {
-	// 	gptimer_stop(mTimerHandle);
-	// 	gptimer_disable(mTimerHandle);
-	// 	gptimer_del_timer(mTimerHandle);
-	// 	mTimerHandle = nullptr;
-	// }
+	BaseType_t do_yield = pdFALSE;
+	xTaskNotifyFromISR(mTaskToNotify, (1 << mNotifyBit), eSetBits, &do_yield);
+	if (m_alarm_config.flags.auto_reload_on_alarm == 0)
+	{
+		gptimer_stop(mTimerHandle);
+		gptimer_disable(mTimerHandle);
+		gptimer_del_timer(mTimerHandle);
+		taskENTER_CRITICAL_ISR(&mMut);
+		mTimerHandle = nullptr;
+		taskEXIT_CRITICAL_ISR(&mMut);
+	}
+	portYIELD_FROM_ISR(do_yield);
 }

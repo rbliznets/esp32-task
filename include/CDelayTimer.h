@@ -40,7 +40,7 @@ protected:
 	bool mAutoRefresh;			///< Флаг автозагрузки таймера.
 	
 	/// Функция, вызываемая по событию в таймере.
-	void timer();
+	inline void timer();
 
 public:
 	/// Запуск таймера.
@@ -64,7 +64,7 @@ public:
 	/*!
 	  \return Состояние таймера.
 	*/
-	bool is_run()
+	inline bool is_run()
 	{
 		taskENTER_CRITICAL(&mMut);
 		bool res = mTimerHandle != nullptr;
