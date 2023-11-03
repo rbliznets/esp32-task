@@ -37,6 +37,7 @@ CDelayTimer::CDelayTimer()
 
 CDelayTimer::~CDelayTimer()
 {
+	stop();
 	gptimer_event_callbacks_t cbs = {
 		.on_alarm = nullptr // register user callback
 	};
