@@ -139,6 +139,12 @@ public:
 	  \return Признак запущенной задачи.
 	*/
 	inline bool isRun() { return mTaskQueue != nullptr; };
+
+	/// Получить хэндлер задачи.
+	/*!
+	  \return хэндлер задачи.
+	*/
+	inline TaskHandle_t getTask() {return mTaskHandle;};
 };
 
 #endif // CBASETASK_H

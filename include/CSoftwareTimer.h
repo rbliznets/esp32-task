@@ -2,25 +2,34 @@
 	\file
 	\brief Программный таймер под задачи FreeRTOS.
 	\authors Близнец Р.А.
-	\version 1.1.0.0
+	\version 1.2.0.0
 	\date 28.04.2020
 */
 
 #if !defined CSOFTWARETIMER_H
 #define CSOFTWARETIMER_H
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "CBaseTask.h"
 #include "freertos/timers.h"
+
+/// Метод сообщения от таймера.
+enum class ETimerEvent
+{
+	Notify,	 ///< Через notify.
+	SendBack ///< Через очередь.
+};
 
 /// Программный таймер под задачи FreeRTOS.
 class CSoftwareTimer
 {
 protected:
 	TimerHandle_t mTimerHandle = nullptr; ///< Хэндлер таймера FreeRTOS.
-	TaskHandle_t mTaskToNotify;			  ///< Указатель на задачу, ожидающую события от таймера.
 	uint8_t mNotifyBit;					  ///< Номер бита для оповещения задачи о событии таймера (не более 31).
-	bool mAutoRefresh;					  ///< Флаг автозагрузки таймера.
+	uint16_t mTimerCmd;					  ///< Номер команды для оповещения задачи о событии таймера (не более 31).
+
+	TaskHandle_t mTaskToNotify; ///< Указатель на задачу, ожидающую события от таймера.
+	CBaseTask *mTask = nullptr; ///< Указатель на задачу, ожидающую события от таймера.
+	ETimerEvent mEventType;		///< Метод сообщения.
 
 	/// Обработчик события таймера.
 	/*!
@@ -29,19 +38,37 @@ protected:
 	static void vTimerCallback(TimerHandle_t xTimer);
 
 	/// Функция, вызываемая по событию в таймере.
-	void timer();
+	inline void timer();
 
 public:
-	/// Запуск таймера.
+	/// Конструктор.
+	/*!
+	  \param[in] xNotifyBit Номер бита для оповещения задачи о событии таймера.
+	  \param[in] timerCmd Номер команды для оповещения задачи о событии таймера.
+	*/
+	CSoftwareTimer(uint8_t xNotifyBit, uint16_t timerCmd = 10000);
+	/// Деструктор.
+	~CSoftwareTimer();
+
+	/// Запуск таймера (событие через notify).
 	/*!
 	  \warning Вызывать только из задачи FreeRTOS.
-	  \param[in] xNotifyBit Номер бита для оповещения задачи о событии таймера.
 	  \param[in] period Период в миллисекундах.
 	  \param[in] autoRefresh Флаг автозагрузки таймера. Если false, то таймер запускается один раз.
 	  \return 0 - в случае успеха.
 	  \sa Stop()
 	*/
-	int start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh = false);
+	int start(uint32_t period, bool autoRefresh = false);
+	/// Запуск таймера.
+	/*!
+	  \param[in] task Задача для сообщений таймера
+	  \param[in] event Тип сообщения
+	  \param[in] period Период в миллисекундах.
+	  \param[in] autoRefresh Флаг автозагрузки таймера. Если false, то таймер запускается один раз.
+	  \return 0 - в случае успеха.
+	  \sa Stop()
+	*/
+	int start(CBaseTask *task, ETimerEvent event, uint32_t period, bool autoRefresh = false);
 	/// Остановка таймера.
 	/*!
 	  \return 0 - в случае успеха.
@@ -53,9 +80,9 @@ public:
 	/*!
 	  \return Состояние таймера.
 	*/
-	bool is_run()
+	inline bool isRun()
 	{
-		return mTimerHandle != nullptr;
+		return xTimerIsTimerActive(mTimerHandle) == pdTRUE;
 	};
 };
 

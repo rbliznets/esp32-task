@@ -21,18 +21,20 @@
 /// Тест таймера FreeRTOS.
 TEST_CASE("CSoftwareTimer", "[task]")
 {
-  uint32_t mem1 = esp_get_free_heap_size();
+  unity_utils_record_free_mem();
 
-  CSoftwareTimer tm;
+  CSoftwareTimer *tm = nullptr;
+  tm = new CSoftwareTimer(1);
+  TEST_ASSERT_TRUE(tm != nullptr);
 
   STARTTIMESHOT();
-  TEST_ASSERT_EQUAL_INT(0, tm.start(1, pdMS_TO_TICKS(100)));
+  TEST_ASSERT_EQUAL_INT(0, tm->start(100));
   uint32_t flag = 0;
   TEST_ASSERT_TRUE(xTaskNotifyWait(0, (1 << 1), &flag, pdMS_TO_TICKS(500)));
   STOPTIMESHOT("100mSec time");
 
   STARTTIMESHOT();
-  TEST_ASSERT_EQUAL_INT(0, tm.start(1, pdMS_TO_TICKS(100), true));
+  TEST_ASSERT_EQUAL_INT(0, tm->start(100, true));
   flag = 0;
   TEST_ASSERT_TRUE(xTaskNotifyWait(0, (1 << 1), &flag, pdMS_TO_TICKS(500)));
   flag = 0;
@@ -41,17 +43,14 @@ TEST_CASE("CSoftwareTimer", "[task]")
   TEST_ASSERT_TRUE(xTaskNotifyWait(0, (1 << 1), &flag, pdMS_TO_TICKS(500)));
   STOPTIMESHOT("300mSec time");
 
-  TEST_ASSERT_EQUAL_INT(0, tm.stop());
+  TEST_ASSERT_EQUAL_INT(0, tm->stop());
+  delete tm;
   vTaskDelay(pdMS_TO_TICKS(10));
 
-  uint32_t mem2 = esp_get_free_heap_size();
-  if (mem1 != mem2)
-  {
-    TRACE("memory leak", mem1 - mem2, false);
-    TRACE("start", mem1, false);
-    TRACE("stop", mem2, false);
-    TEST_FAIL_MESSAGE("memory leak");
-  }
+  unity_utils_evaluate_leaks_direct(0);
+#ifdef CONFIG_HEAP_POISONING_COMPREHENSIVE
+  heap_caps_check_integrity_all(true);
+#endif
 }
 
 TEST_CASE("CDelayTimer", "[task]")
