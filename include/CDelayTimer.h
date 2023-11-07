@@ -2,7 +2,7 @@
 	\file
 	\brief Аппаратный таймер под задачи FreeRTOS.
 	\authors Близнец Р.А.
-	\version 1.1.0.0
+	\version 1.2.0.0
 	\date 31.03.2023
 */
 
@@ -65,6 +65,15 @@ public:
 	  \sa Start()
 	*/
 	int stop();
+
+	/// Ожидание окончания таймера.
+	/*!
+	  \warning Вызывать только из задачи FreeRTOS.
+	  \param[in] period Период в микросекундах.
+	  \param[in] xNotifyBit Номер бита для оповещения задачи о событии таймера.
+	  \return 0 - в случае успеха.
+	*/
+	int wait(uint32_t period, uint8_t xNotifyBit = 0);
 };
 
 #endif // CDELAYTIMER_H

@@ -2,7 +2,7 @@
 	\file
 	\brief Аппаратный таймер под задачи FreeRTOS.
 	\authors Близнец Р.А.
-	\version 1.1.0.0
+	\version 1.2.0.0
 	\date 31.03.2023
 */
 
@@ -15,7 +15,7 @@ CDelayTimer::CDelayTimer()
 	gptimer_config_t mTimer_config = {
 		.clk_src = GPTIMER_CLK_SRC_DEFAULT,
 		.direction = GPTIMER_COUNT_UP,
-		.resolution_hz = 1 * 1000 * 1000, // 1MHz, 1 tick = 1us
+		.resolution_hz = 1000000, // 1MHz, 1 tick = 1us
 		.flags = {0}};
 	gptimer_event_callbacks_t cbs = {
 		.on_alarm = timer_on_alarm_cb // register user callback
@@ -71,11 +71,16 @@ int CDelayTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 		TRACE_ERROR("CDelayTimer:gptimer_enable failed", er);
 		return -4;
 	}
+	if ((er = gptimer_set_raw_count(mTimerHandle, 0)) != ESP_OK)
+	{
+		TRACE_ERROR("CDelayTimer:gptimer_set_raw_count failed", er);
+		return -5;
+	}
 	if ((er = gptimer_start(mTimerHandle)) != ESP_OK)
 	{
 		TRACE_ERROR("CDelayTimer:gptimer_start failed!", er);
 		gptimer_disable(mTimerHandle);
-		return -5;
+		return -6;
 	}
 	mRun = true;
 	return 0;
@@ -92,6 +97,20 @@ int CDelayTimer::stop()
 	}
 	else
 		return -1;
+}
+
+int CDelayTimer::wait(uint32_t period, uint8_t xNotifyBit)
+{
+	if(start(xNotifyBit, period, false) != 0)
+		return -1;
+	uint32_t flag = 0;
+	if(xTaskNotifyWait(0, (1 << xNotifyBit), &flag, pdMS_TO_TICKS((period/1000)+10)) != pdTRUE)
+	{
+		stop();
+		return -2;
+	}
+	stop();
+	return 0;
 }
 
 IRAM_ATTR void CDelayTimer::timer()

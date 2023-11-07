@@ -59,9 +59,9 @@ TEST_CASE("CDelayTimer", "[task]")
 
   CDelayTimer *tm = new CDelayTimer();
 
-  TEST_ASSERT_EQUAL_INT(0, tm->start(1, 250));
-  STARTTIMESHOT();
   uint32_t flag = 0;
+  STARTTIMESHOT();
+  TEST_ASSERT_EQUAL_INT(0, tm->start(1, 250));
   TEST_ASSERT_TRUE(xTaskNotifyWait(0, (1 << 1), &flag, pdMS_TO_TICKS(10)));
   STOPTIMESHOT("250usec time");
 
@@ -76,6 +76,11 @@ TEST_CASE("CDelayTimer", "[task]")
   STOPTIMESHOT("300mSec time");
 
   TEST_ASSERT_EQUAL_INT(0, tm->stop());
+
+  STARTTIMESHOT();
+  TEST_ASSERT_EQUAL_INT(0, tm->wait(750));
+  STOPTIMESHOT("750usec time");
+
   vTaskDelay(pdMS_TO_TICKS(10));
 
   delete tm;
