@@ -63,12 +63,12 @@ void CTraceList::clear()
 	unlock();
 }
 
-void CTraceList::trace(const char *strError, int32_t errCode, bool reboot)
+void CTraceList::trace(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot)
 {
 	lock();
 	for (auto x : m_list)
 	{
-		x->trace(strError, errCode, reboot);
+		x->trace(strError, errCode, level, reboot);
 	}
 	unlock();
 
@@ -80,12 +80,12 @@ void CTraceList::trace(const char *strError, int32_t errCode, bool reboot)
 	}
 }
 
-void CTraceList::traceFromISR(const char *strError, int32_t errCode, bool reboot, BaseType_t *pxHigherPriorityTaskWoken)
+void CTraceList::traceFromISR(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot, BaseType_t *pxHigherPriorityTaskWoken)
 {
 	// lock();
 	for (auto x : m_list)
 	{
-		x->traceFromISR(strError, errCode, reboot, pxHigherPriorityTaskWoken);
+		x->traceFromISR(strError, errCode, level, reboot, pxHigherPriorityTaskWoken);
 	}
 	// unlock();
 }

@@ -2,7 +2,7 @@
 	\file
 	\brief Класс для вывода отладочной информации.
 	\authors Близнец Р.А.
-	\version 1.2.0.0
+	\version 1.3.0.0
 	\date 15.09.2022
 
 	Один объект на приложение.
@@ -43,6 +43,8 @@ class CTraceTask : public CBaseTask, public ITraceLog
 private:
 	portMUX_TYPE mMut = portMUX_INITIALIZER_UNLOCKED; ///< Мьютекс для критической секции.
 protected:
+	char m_header[32]; ///< Буфер для времени
+
 	/// Вывести интервал времени с предыдущего сообщения
 	/*!
 	  \param[in] time Сообщение об ошибке.
@@ -191,16 +193,18 @@ public:
 	/*!
 	  \param[in] strError Сообщение об ошибке.
 	  \param[in] errCode Код ошибки.
+	  \param[in] level Уровень вывода сообщения.
 	  \param[in] reboot Флаг перезагрузки.
 	*/
-	virtual void trace(const char *strError, int32_t errCode, bool reboot) override;
+	virtual void trace(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot) override;
 	/// Виртуальный метод трассировки из прерывания.
 	/*!
 	  \param[in] strError Сообщение об ошибке.
 	  \param[in] errCode Код ошибки.
+	  \param[in] level Уровень вывода сообщения.
 	  \param[in] reboot Флаг перезагрузки.
 	*/
-	virtual void IRAM_ATTR traceFromISR(const char *strError, int32_t errCode, bool reboot, BaseType_t *pxHigherPriorityTaskWoken) override;
+	virtual void IRAM_ATTR traceFromISR(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot, BaseType_t *pxHigherPriorityTaskWoken) override;
 
 	/// Виртуальный метод массива данных
 	/*!

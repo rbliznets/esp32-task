@@ -2,7 +2,7 @@
 	\file
 	\brief Класс для вывода отладочной информации.
 	\authors Близнец Р.А.
-	\version 1.2.0.0
+	\version 1.3.0.0
 	\date 15.09.2022
 
 	Один объект на приложение.
@@ -13,6 +13,7 @@
 #include <cstring>
 #include "esp_system.h"
 #include "CTrace.h"
+#include "esp_log.h"
 
 #ifdef CONFIG_TRACE_AUTO_RESET
 #define AUTO_TIMER CONFIG_TRACE_AUTO_RESET
@@ -24,31 +25,31 @@ void CTraceTask::printHeader(uint64_t time, uint32_t n)
 {
 	uint64_t res = time / n;
 #if (CONFIG_TRACE_USEC == 1)
-	std::printf("(+%liusec)", (long)res);
+	std::snprintf(m_header, sizeof(m_header), "(+%liusec)", (long)res);
 #else
-	if (res >= 10000000)
-	{
-		std::printf("(+%lisec)", (long)(res / 1000000));
-	}
-	else
-	{
-		if (res < 10000)
-		{
-			if (res < 10)
-			{
-				double f = time / (double)n;
-				std::printf("(+%linsec)", (long)(f * 1000));
-			}
-			else
-			{
-				std::printf("(+%liusec)", (long)res);
-			}
-		}
-		else
-		{
-			std::printf("(+%limsec)", (long)(res / 1000));
-		}
-	}
+    if (res >= 10000000)
+    {
+        std::snprintf(m_header, sizeof(m_header), "(+%lisec)", (long)(res / 1000000));
+    }
+    else
+    {
+        if (res < 10000)
+        {
+            if (res < 10)
+            {
+                double f = time / (double)n;
+                std::snprintf(m_header, sizeof(m_header), "(+%linsec)", (long)(f * 1000));
+            }
+            else
+            {
+                std::snprintf(m_header, sizeof(m_header), "(+%liusec)", (long)res);
+            }
+        }
+        else
+        {
+            std::snprintf(m_header, sizeof(m_header), "(+%limsec)", (long)(res / 1000));
+        }
+    }
 #endif
 }
 
@@ -75,7 +76,7 @@ void CTraceTask::run()
 			break;
 		case MSG_TRACE_STRING_REBOOT:
 			printString((char *)msg.msgBody);
-			std::printf("trace reboot...\n");
+			// std::printf("trace reboot...\n");
 			// vPortFree(msg.msgBody);
 			fflush(stdout);
 			esp_restart();
@@ -144,7 +145,11 @@ void CTraceTask::printData32_2(char *data)
 	char *strError = &data[8 + 4 + 4];
 
 	printHeader(*res);
-
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI(m_header,"32 %s(%ld)",strError,(*size));
+	ESP_LOG_BUFFER_HEX(strError,pdata,(*size)*4);
+#else
+    std::printf(m_header);
 	std::printf("%s %ld:", strError, *size);
 	std::printf(" %d", (int)pdata[0]);
 	for (int16_t i = 1; i < *size; i++)
@@ -152,6 +157,7 @@ void CTraceTask::printData32_2(char *data)
 		std::printf(",%d", (int)pdata[i]);
 	}
 	std::printf("\n");
+#endif
 }
 
 void CTraceTask::printData32h_2(char *data)
@@ -162,7 +168,11 @@ void CTraceTask::printData32h_2(char *data)
 	char *strError = &data[8 + 4 + 4];
 
 	printHeader(*res);
-
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI(m_header,"32 %s(%ld)",strError,(*size));
+	ESP_LOG_BUFFER_HEX(strError,pdata,(*size)*4);
+#else
+    std::printf(m_header);
 	std::printf("%s %ld:", strError, *size);
 	std::printf(" 0x%08x", (int)pdata[0]);
 	for (int16_t i = 1; i < *size; i++)
@@ -170,6 +180,7 @@ void CTraceTask::printData32h_2(char *data)
 		std::printf(",0x%08x", (int)pdata[i]);
 	}
 	std::printf("\n");
+#endif
 }
 
 void CTraceTask::printData32h(char *data)
@@ -180,7 +191,11 @@ void CTraceTask::printData32h(char *data)
 	char *strError = &data[8 + 4 + ((*size) * sizeof(uint32_t))];
 
 	printHeader(*res);
-
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI(m_header,"32 %s(%ld)",strError,(*size));
+	ESP_LOG_BUFFER_HEX(strError,pdata,(*size)*4);
+#else
+    std::printf(m_header);
 	std::printf("%s %ld:", strError, *size);
 	std::printf(" 0x%08x", (int)pdata[0]);
 	for (int16_t i = 1; i < *size; i++)
@@ -188,6 +203,7 @@ void CTraceTask::printData32h(char *data)
 		std::printf(",0x%08x", (int)pdata[i]);
 	}
 	std::printf("\n");
+#endif
 }
 
 void CTraceTask::printData32(char *data)
@@ -198,7 +214,11 @@ void CTraceTask::printData32(char *data)
 	char *strError = &data[8 + 4 + ((*size) * sizeof(uint32_t))];
 
 	printHeader(*res);
-
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI(m_header,"32 %s(%ld)",strError,(*size));
+	ESP_LOG_BUFFER_HEX(strError,pdata,(*size)*4);
+#else
+    std::printf(m_header);
 	std::printf("%s %ld:", strError, *size);
 	std::printf(" %d", (int)pdata[0]);
 	for (int16_t i = 1; i < *size; i++)
@@ -206,6 +226,7 @@ void CTraceTask::printData32(char *data)
 		std::printf(",%d", (int)pdata[i]);
 	}
 	std::printf("\n");
+#endif
 }
 
 void CTraceTask::printData16h(char *data)
@@ -216,7 +237,11 @@ void CTraceTask::printData16h(char *data)
 	char *strError = &data[8 + 4 + ((*size) * sizeof(uint16_t))];
 
 	printHeader(*res);
-
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI(m_header,"16 %s(%ld)",strError,(*size));
+	ESP_LOG_BUFFER_HEX(strError,pdata,(*size)*2);
+#else
+    std::printf(m_header);
 	std::printf("%s %ld:", strError, *size);
 	std::printf(" 0x%04x", pdata[0]);
 	for (int16_t i = 1; i < *size; i++)
@@ -224,6 +249,7 @@ void CTraceTask::printData16h(char *data)
 		std::printf(",0x%04x", pdata[i]);
 	}
 	std::printf("\n");
+#endif
 }
 
 void CTraceTask::printData16h_2(char *data)
@@ -234,7 +260,11 @@ void CTraceTask::printData16h_2(char *data)
 	char *strError = &data[8 + 4 + 4];
 
 	printHeader(*res);
-
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI(m_header,"16 %s(%ld)",strError,(*size));
+	ESP_LOG_BUFFER_HEX(strError,pdata,(*size)*2);
+#else
+    std::printf(m_header);
 	std::printf("%s %ld:", strError, *size);
 	std::printf(" 0x%04x", pdata[0]);
 	for (int16_t i = 1; i < *size; i++)
@@ -242,6 +272,7 @@ void CTraceTask::printData16h_2(char *data)
 		std::printf(",0x%04x", pdata[i]);
 	}
 	std::printf("\n");
+#endif
 }
 
 void CTraceTask::printData16(char *data)
@@ -252,7 +283,11 @@ void CTraceTask::printData16(char *data)
 	char *strError = &data[8 + 4 + ((*size) * sizeof(uint16_t))];
 
 	printHeader(*res);
-
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI(m_header,"16 %s(%ld)",strError,(*size));
+	ESP_LOG_BUFFER_HEX(strError,pdata,(*size)*2);
+#else
+    std::printf(m_header);
 	std::printf("%s %ld:", strError, *size);
 	std::printf(" %d", pdata[0]);
 	for (int16_t i = 1; i < *size; i++)
@@ -260,6 +295,7 @@ void CTraceTask::printData16(char *data)
 		std::printf(",%d", pdata[i]);
 	}
 	std::printf("\n");
+#endif
 }
 
 void CTraceTask::printData16_2(char *data)
@@ -270,7 +306,11 @@ void CTraceTask::printData16_2(char *data)
 	char *strError = &data[8 + 4 + 4];
 
 	printHeader(*res);
-
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI(m_header,"16 %s(%ld)",strError,(*size));
+	ESP_LOG_BUFFER_HEX(strError,pdata,(*size)*2);
+#else
+    std::printf(m_header);
 	std::printf("%s %ld:", strError, *size);
 	std::printf(" %d", pdata[0]);
 	for (int16_t i = 1; i < *size; i++)
@@ -278,6 +318,7 @@ void CTraceTask::printData16_2(char *data)
 		std::printf(",%d", pdata[i]);
 	}
 	std::printf("\n");
+#endif
 }
 
 void CTraceTask::printData8h(char *data)
@@ -288,7 +329,11 @@ void CTraceTask::printData8h(char *data)
 	char *strError = &data[8 + 4 + ((*size) * sizeof(uint8_t))];
 
 	printHeader(*res);
-
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI(m_header,"8 %s(%ld)",strError,(*size));
+	ESP_LOG_BUFFER_HEX(strError,pdata,(*size));
+#else
+    std::printf(m_header);
 	std::printf("%s %ld:", strError, *size);
 	std::printf(" 0x%02x", pdata[0]);
 	for (int16_t i = 1; i < *size; i++)
@@ -296,6 +341,7 @@ void CTraceTask::printData8h(char *data)
 		std::printf(",0x%02x", pdata[i]);
 	}
 	std::printf("\n");
+#endif
 }
 
 void CTraceTask::printData8h_2(char *data)
@@ -306,7 +352,11 @@ void CTraceTask::printData8h_2(char *data)
 	char *strError = &data[8 + 4 + 4];
 
 	printHeader(*res);
-
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI(m_header,"8 %s(%ld)",strError,(*size));
+	ESP_LOG_BUFFER_HEX(strError,pdata,(*size));
+#else
+    std::printf(m_header);
 	std::printf("%s %ld:", strError, *size);
 	std::printf(" 0x%02x", pdata[0]);
 	for (int16_t i = 1; i < *size; i++)
@@ -314,6 +364,7 @@ void CTraceTask::printData8h_2(char *data)
 		std::printf(",0x%02x", pdata[i]);
 	}
 	std::printf("\n");
+#endif
 }
 
 void CTraceTask::printData8(char *data)
@@ -324,7 +375,11 @@ void CTraceTask::printData8(char *data)
 	char *strError = &data[8 + 4 + ((*size) * sizeof(uint8_t))];
 
 	printHeader(*res);
-
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI(m_header,"8 %s(%ld)",strError,(*size));
+	ESP_LOG_BUFFER_HEX(strError,pdata,(*size));
+#else
+    std::printf(m_header);
 	std::printf("%s %ld:", strError, *size);
 	std::printf(" %d", pdata[0]);
 	for (int16_t i = 1; i < *size; i++)
@@ -332,6 +387,7 @@ void CTraceTask::printData8(char *data)
 		std::printf(",%d", pdata[i]);
 	}
 	std::printf("\n");
+#endif
 }
 
 void CTraceTask::printData8_2(char *data)
@@ -342,7 +398,11 @@ void CTraceTask::printData8_2(char *data)
 	char *strError = &data[8 + 4 + 4];
 
 	printHeader(*res);
-
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI(m_header,"8 %s(%ld)",strError,(*size));
+	ESP_LOG_BUFFER_HEX(strError,pdata,(*size));
+#else
+    std::printf(m_header);
 	std::printf("%s %ld:", strError, *size);
 	std::printf(" %d", pdata[0]);
 	for (int16_t i = 1; i < *size; i++)
@@ -350,16 +410,23 @@ void CTraceTask::printData8_2(char *data)
 		std::printf(",%d", pdata[i]);
 	}
 	std::printf("\n");
+#endif
 }
 
 void CTraceTask::printString(char *data)
 {
 	uint64_t *res = (uint64_t *)data;
 	int32_t *errCode = (int32_t *)&data[8];
-	char *strError = &data[12];
+	esp_log_level_t level = (esp_log_level_t)data[12];
+	char *strError = &data[13];
 
 	printHeader(*res);
-	std::printf("->%d:%s\n", (int)(*errCode), strError);
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOG_LEVEL(level,m_header,"%ld:%s",(*errCode), strError);
+#else
+    std::printf(m_header);
+	std::printf(": %d:%s\n", (int)(*errCode), strError);
+#endif
 }
 
 void CTraceTask::printStop(char *data)
@@ -369,11 +436,15 @@ void CTraceTask::printStop(char *data)
 	char *str = &data[12];
 
 	printHeader(*x, *n);
-
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI(m_header,"%s", str);
+#else
+    std::printf(m_header);
 	std::printf(" %s\n", str);
+#endif
 }
 
-void CTraceTask::trace(const char *strError, int32_t errCode, bool reboot)
+void CTraceTask::trace(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot)
 {
 	STaskMessage msg;
 	taskENTER_CRITICAL(&mMut);
@@ -381,35 +452,7 @@ void CTraceTask::trace(const char *strError, int32_t errCode, bool reboot)
 	taskEXIT_CRITICAL(&mMut);
 	if (errCode != 0x7fffffff)
 	{
-		int ln = 8 + 4 + 1;
-		if (strError != nullptr)
-		{
-			ln += std::strlen(strError);
-		}
-		char *str = (char *)allocNewMsg(&msg, MSG_TRACE_STRING, ln);
-		std::memcpy(str, &tm, 8);
-		std::memcpy(&str[8], &errCode, 4);
-		if (strError != nullptr)
-		{
-			std::strcpy(&str[12], strError);
-		}
-		else
-		{
-			str[ln - 1] = 0;
-		}
-		sendMessage(&msg, 0, true);
-	}
-}
-
-void CTraceTask::traceFromISR(const char *strError, int32_t errCode, bool reboot, BaseType_t *pxHigherPriorityTaskWoken)
-{
-	STaskMessage msg;
-	taskENTER_CRITICAL_ISR(&mMut);
-	uint64_t tm = getTimer(AUTO_TIMER);
-	taskEXIT_CRITICAL_ISR(&mMut);
-	if (errCode != 0x7fffffff)
-	{
-		int ln = 8 + 4 + 1;
+		int ln = 8 + 4 + 1 + 1;
 		if (strError != nullptr)
 		{
 			ln += std::strlen(strError);
@@ -421,13 +464,47 @@ void CTraceTask::traceFromISR(const char *strError, int32_t errCode, bool reboot
 			str = (char *)allocNewMsg(&msg, MSG_TRACE_STRING, ln);
 		std::memcpy(str, &tm, 8);
 		std::memcpy(&str[8], &errCode, 4);
+		str[12] = (uint8_t)level;
 		if (strError != nullptr)
 		{
-			std::strcpy(&str[12], strError);
+			std::strcpy(&str[13], strError);
 		}
 		else
 		{
-			str[12] = 0;
+			str[ln - 1] = 0;
+		}
+		sendMessage(&msg, 0, true);
+	}
+}
+
+void CTraceTask::traceFromISR(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot, BaseType_t *pxHigherPriorityTaskWoken)
+{
+	STaskMessage msg;
+	taskENTER_CRITICAL_ISR(&mMut);
+	uint64_t tm = getTimer(AUTO_TIMER);
+	taskEXIT_CRITICAL_ISR(&mMut);
+	if (errCode != 0x7fffffff)
+	{
+		int ln = 8 + 4 + 1 + 1;
+		if (strError != nullptr)
+		{
+			ln += std::strlen(strError);
+		}
+		char *str;
+		if (reboot)
+			str = (char *)allocNewMsg(&msg, MSG_TRACE_STRING_REBOOT, ln);
+		else
+			str = (char *)allocNewMsg(&msg, MSG_TRACE_STRING, ln);
+		std::memcpy(str, &tm, 8);
+		std::memcpy(&str[8], &errCode, 4);
+		str[12] = (uint8_t)level;
+		if (strError != nullptr)
+		{
+			std::strcpy(&str[13], strError);
+		}
+		else
+		{
+			str[ln - 1] = 0;
 		}
 		sendMessageFromISR(&msg, pxHigherPriorityTaskWoken);
 	}

@@ -2,7 +2,7 @@
 	\file
 	\brief Вывод сообщения об ошибке.
 	\authors Близнец Р.А.
-	\version 1.2.2.0
+	\version 1.3.0.0
 	\date 10.07.2020
 */
 
@@ -18,7 +18,7 @@
 
 #ifdef CONFIG_COMPILER_CXX_RTTI
 #include <typeinfo>
-#endif 
+#endif
 
 #ifdef CONFIG_DEBUG_CODE
 /// Вывод лога
@@ -37,13 +37,15 @@
 	\param[in] code Код ошибки.
 	\param[in] reboot Флаг перезагрузки.
 */
-#define TRACE(str, code, reboot) traceLog.trace((char *)str, code, reboot)
+#define TRACE(str, code, reboot) traceLog.trace((char *)str, code, ESP_LOG_INFO, reboot)
+#define TRACE_W(str, code, reboot) traceLog.trace((char *)str, code, ESP_LOG_WARN, reboot)
+#define TRACE_E(str, code, reboot) traceLog.trace((char *)str, code, ESP_LOG_ERROR, reboot)
 /// Вывести значение в десятичном виде
 /*!
 	\param[in] str Сообщение.
 	\param[in] code значение.
 */
-#define TDEC(str, code) traceLog.trace((char *)str, code, false)
+#define TDEC(str, code) traceLog.trace((char *)str, code, ESP_LOG_INFO, false)
 /// Вывести значение в hex виде
 /*!
 	\param[in] str Сообщение.
@@ -61,7 +63,7 @@
 	\param[in] reboot Флаг перезагрузки.
 	\param[in|out] pxHigherPriorityTaskWoken Флаг переключения задач.
 */
-#define TRACE_FROM_ISR(str, code, reboot, pxHigherPriorityTaskWoken) traceLog.traceFromISR((char *)str, code, reboot, pxHigherPriorityTaskWoken)
+#define TRACE_FROM_ISR(str, code, reboot, pxHigherPriorityTaskWoken) traceLog.traceFromISR((char *)str, code, ESP_LOG_INFO, reboot, pxHigherPriorityTaskWoken)
 
 /// Метод трассировки массива данных
 /*!
@@ -106,20 +108,24 @@
 	\param[in] str Сообщение об ошибке.
 	\param[in] x Код ошибки.
 */
-#define TRACE_ERROR(s,x)\
-	{                               \
-		if(std::is_base_of_v<ITraceLog,typeof(*this)>) ESP_LOGE(typeid(*this).name(), "%s: %d", s, x);\
-        else traceLog.trace((char *)s, x, false);\
+#define TRACE_ERROR(s, x)                                       \
+	{                                                           \
+		if (std::is_base_of_v<ITraceLog, typeof(*this)>)        \
+			ESP_LOGE(typeid(*this).name(), "%s: %d", s, x);     \
+		else                                                    \
+			traceLog.trace((char *)s, x, ESP_LOG_ERROR, false); \
 	}
 /// Вывод предупреждения из метода класса.
 /*!
 	\param[in] str Сообщение об ошибке.
 	\param[in] x Код ошибки.
 */
-#define TRACE_WARNING(s,x)\
-	{                               \
-		if(std::is_base_of_v<ITraceLog,typeof(*this)>) ESP_LOGW(typeid(*this).name(), "%s: %d", s, x);\
-        else traceLog.trace((char *)s, x, false);\
+#define TRACE_WARNING(s, x)                                    \
+	{                                                          \
+		if (std::is_base_of_v<ITraceLog, typeof(*this)>)       \
+			ESP_LOGW(typeid(*this).name(), "%s: %d", s, x);    \
+		else                                                   \
+			traceLog.trace((char *)s, x, ESP_LOG_WARN, false); \
 	}
 #else
 /// Вывод ошибки из метода класса.
@@ -127,22 +133,26 @@
 	\param[in] str Сообщение об ошибке.
 	\param[in] x Код ошибки.
 */
-#define TRACE_ERROR(s,x)\
-	{                               \
-		if(std::is_base_of_v<ITraceLog,typeof(*this)>) ESP_LOGE("Trace", "%s: %d", s, x);\
-        else traceLog.trace((char *)s, x, false);\
+#define TRACE_ERROR(s, x)                                       \
+	{                                                           \
+		if (std::is_base_of_v<ITraceLog, typeof(*this)>)        \
+			ESP_LOGE("Trace", "%s: %d", s, x);                  \
+		else                                                    \
+			traceLog.trace((char *)s, x, ESP_LOG_ERROR, false); \
 	}
 /// Вывод предупреждения из метода класса.
 /*!
 	\param[in] str Сообщение об ошибке.
 	\param[in] x Код ошибки.
 */
-#define TRACE_WARNING(s,x)\
-	{                               \
-		if(std::is_base_of_v<ITraceLog,typeof(*this)>) ESP_LOGW("Trace", "%s: %d", s, x);\
-        else traceLog.trace((char *)s, x, false);\
+#define TRACE_WARNING(s, x)                                     \
+	{                                                           \
+		if (std::is_base_of_v<ITraceLog, typeof(*this)>)        \
+			ESP_LOGW("Trace", "%s: %d", s, x);                  \
+		else                                                    \
+			traceLog.trace((char *)s, x, ESP_LOG_WARNg, false); \
 	}
-#endif 
+#endif
 
 #else
 #define LOG(str)
@@ -170,27 +180,27 @@
 	\param[in] str Сообщение об ошибке.
 	\param[in] x Код ошибки.
 */
-#define TRACE_ERROR(s,x) ESP_LOGE(typeid(*this), "%s: %d", s, x)
+#define TRACE_ERROR(s, x) ESP_LOGE(typeid(*this), "%s: %d", s, x)
 /// Вывод предупреждения из метода класса.
 /*!
 	\param[in] str Сообщение об ошибке.
 	\param[in] x Код ошибки.
 */
-#define TRACE_WARNING(s,x) ESP_LOGW(typeid(*this), "%s: %d", s, x)
+#define TRACE_WARNING(s, x) ESP_LOGW(typeid(*this), "%s: %d", s, x)
 #else
 /// Вывод ошибки из метода класса.
 /*!
 	\param[in] str Сообщение об ошибке.
 	\param[in] x Код ошибки.
 */
-#define TRACE_ERROR(s,x) ESP_LOGE("Trace", "%s: %d", s, x)
+#define TRACE_ERROR(s, x) ESP_LOGE("Trace", "%s: %d", s, x)
 /// Вывод предупреждения из метода класса.
 /*!
 	\param[in] str Сообщение об ошибке.
 	\param[in] x Код ошибки.
 */
-#define TRACE_WARNING(s,x) ESP_LOGW("Trace", "%s: %d", s, x)
-#endif 
+#define TRACE_WARNING(s, x) ESP_LOGW("Trace", "%s: %d", s, x)
+#endif
 #endif
 
 /// Класс списка зарегистрированных трассировщиков
@@ -212,17 +222,19 @@ public:
 	/*!
 	  \param[in] strError Сообщение об ошибке.
 	  \param[in] errCode Код ошибки.
+	  \param[in] level Уровень вывода сообщения.
 	  \param[in] reboot Флаг перезагрузки.
 	*/
-	virtual void trace(const char *strError, int32_t errCode, bool reboot) override;
+	virtual void trace(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot) override;
 	/// Виртуальный метод трассировки из прерывания.
 	/*!
 	  \param[in] strError Сообщение об ошибке.
 	  \param[in] errCode Код ошибки.
+	  \param[in] level Уровень вывода сообщения.
 	  \param[in] reboot Флаг перезагрузки.
 	  \param[in|out] pxHigherPriorityTaskWoken Флаг переключения задач.
 	*/
-	virtual void IRAM_ATTR traceFromISR(const char *strError, int32_t errCode, bool reboot, BaseType_t *pxHigherPriorityTaskWoken) override;
+	virtual void IRAM_ATTR traceFromISR(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot, BaseType_t *pxHigherPriorityTaskWoken) override;
 
 	/// Виртуальный метод массива данных
 	/*!

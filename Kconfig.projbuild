@@ -42,6 +42,19 @@ menu "Tasks"
             bool "core 1"
 
     endchoice
+
+    choice
+        depends on !DEBUG_TRACE_NONE
+        prompt "Choose the method of print"
+        default DEBUG_TRACE_ESPLOG
+
+        config DEBUG_TRACE_PRINTF
+            bool "printf"
+
+        config DEBUG_TRACE_ESPLOG
+            bool "esp_log"
+
+    endchoice
         
     config TRACE_AUTO_RESET
         depends on DEBUG_CODE

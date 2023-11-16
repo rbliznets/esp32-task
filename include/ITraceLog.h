@@ -2,7 +2,7 @@
 	\file
 	\brief Интерфейс класса журнала ошибок системы.
 	\authors Близнец Р.А.
-	\version 1.1.1.0
+	\version 1.3.0.0
 	\date 10.07.2020
 */
 
@@ -16,6 +16,7 @@
 #include "sdkconfig.h"
 
 #include "esp_timer.h"
+#include "esp_log.h"
 
 /// Интерфейс класса трассировки сообщения об ошибке
 class ITraceLog
@@ -48,17 +49,19 @@ public:
 	/*!
 	  \param[in] strError Сообщение об ошибке.
 	  \param[in] errCode Код ошибки.
+	  \param[in] level Уровень вывода сообщения.
 	  \param[in] reboot Флаг перезагрузки.
 	*/
-	virtual void trace(const char *strError, int32_t errCode, bool reboot) = 0;
+	virtual void trace(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot) = 0;
 	/// Виртуальный метод трассировки из прерывания.
 	/*!
 	  \param[in] strError Сообщение об ошибке.
 	  \param[in] errCode Код ошибки.
+	  \param[in] level Уровень вывода сообщения.
 	  \param[in] reboot Флаг перезагрузки.
 	  \param[out] pxHigherPriorityTaskWoken Флаг переключения задач.
 	*/
-	virtual void IRAM_ATTR traceFromISR(const char *strError, int32_t errCode, bool reboot, BaseType_t *pxHigherPriorityTaskWoken){};
+	virtual void IRAM_ATTR traceFromISR(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot, BaseType_t *pxHigherPriorityTaskWoken){};
 	/// Виртуальный метод массива данных
 	/*!
 	  \param[in] strError Сообщение об ошибке.
@@ -117,7 +120,7 @@ public:
 	  \param[in] str название интервала.
 	  \param[in] n количество для усреднения.
 	*/
-	virtual void stopTime(const char *str, uint32_t n = 1) { trace(str, n, false); };
+	virtual void stopTime(const char *str, uint32_t n = 1) { trace(str, n, ESP_LOG_INFO, false); };
 };
 
 #endif // ITRACELOG_H

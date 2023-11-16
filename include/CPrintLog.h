@@ -2,7 +2,7 @@
 	\file
 	\brief Класс журнала ошибок системы для консоли.
 	\authors Близнец Р.А.
-	\version 1.2.0.0
+	\version 1.3.0.0
 	\date 10.07.2020
 */
 
@@ -15,6 +15,8 @@
 class CPrintLog : public ITraceLog
 {
 protected:
+	char m_header[32]; ///< Буфер для времени
+
 	/// Вывести интрвал времени с предыдущего собщения
 	/*!
 	  \param[in] time Сообщение об ошибке.
@@ -32,9 +34,10 @@ public:
 	/*!
 	  \param[in] strError Сообщение об ошибке.
 	  \param[in] errCode Код ошибки.
+	  \param[in] level Уровень вывода сообщения.
 	  \param[in] reboot Флаг перезагрузки.
 	*/
-	void trace(const char *strError, int32_t errCode, bool reboot) override;
+	void trace(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot) override;
 
 	/// Виртуальный метод массива данных
 	/*!
