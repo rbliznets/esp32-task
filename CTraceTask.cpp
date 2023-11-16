@@ -1,7 +1,7 @@
 /*!
 	\file
 	\brief Класс для вывода отладочной информации.
-	\authors Близнец Р.А.
+    \authors Близнец Р.А. (r.bliznets@gmail.com)
 	\version 1.3.0.0
 	\date 15.09.2022
 

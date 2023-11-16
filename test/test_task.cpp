@@ -1,7 +1,7 @@
 /*!
   \file
   \brief Модульные тесты для task.
-  \authors Близнец Р.А.
+  \authors Близнец Р.А. (r.bliznets@gmail.com)
   \version 0.0.0.1
   \date 05.05.2022
   \copyright (c) Copyright 2022, ООО "Глобал Ориент", Москва, Россия, http://www.glorient.ru/

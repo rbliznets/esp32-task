@@ -1,7 +1,7 @@
 /*!
 	\file
 	\brief Аппаратный таймер под задачи FreeRTOS.
-	\authors Близнец Р.А.
+    \authors Близнец Р.А. (r.bliznets@gmail.com)
 	\version 1.2.0.0
 	\date 31.03.2023
 */

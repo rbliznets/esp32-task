@@ -1,7 +1,7 @@
 /*!
 	\file
 	\brief Программный таймер под задачи FreeRTOS.
-	\authors Близнец Р.А.
+    \authors Близнец Р.А. (r.bliznets@gmail.com)
 	\version 1.2.0.0
 	\date 28.04.2020
 */
