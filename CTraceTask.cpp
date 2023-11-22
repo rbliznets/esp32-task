@@ -70,9 +70,13 @@ void CTraceTask::run()
 			vPortFree(msg.msgBody);
 			break;
 		case MSG_PRINT_STRING:
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+			ESP_LOGI("*","%s",(char *)msg.msgBody);
+#else
 			std::printf((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
 			std::printf("\n");
+#endif
+			vPortFree(msg.msgBody);
 			break;
 		case MSG_TRACE_STRING_REBOOT:
 			printString((char *)msg.msgBody);
