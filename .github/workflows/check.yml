@@ -1,6 +1,6 @@
 # This is a basic workflow that is manually triggered
 
-name: Manual workflow
+name: Checking
 
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
@@ -16,6 +16,8 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Runs a single command using the runners shell
-    - name: Send greeting
-      run: echo "Hello"
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+      - name: C/C++ Linter
+        uses: cpp-linter/cpp-linter-action@v2.8.0
+        
