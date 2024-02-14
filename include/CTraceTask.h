@@ -89,7 +89,7 @@ protected:
 	  \param[out] pxHigherPriorityTaskWoken Флаг переключения задач.
 	  \return true в случае успеха.
 	*/
-	inline bool sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken) override
+	inline bool IRAM_ATTR sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken) override
 	{
 		return CBaseTask::sendMessageFromISR(msg, pxHigherPriorityTaskWoken, 0);
 	};

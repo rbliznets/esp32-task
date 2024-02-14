@@ -93,7 +93,7 @@ bool CBaseTask::sendMessageFront(STaskMessage *msg, uint32_t nFlag, TickType_t x
 	}
 }
 
-bool CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken, uint32_t nFlag)
+bool IRAM_ATTR CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken, uint32_t nFlag)
 {
 	assert(msg != nullptr);
 

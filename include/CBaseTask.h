@@ -100,7 +100,7 @@ public:
 	  \param[out] pxHigherPriorityTaskWoken Флаг переключения задач.
 	  \return true в случае успеха.
 	*/
-	virtual bool sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken) = 0;
+	virtual bool IRAM_ATTR sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken) = 0;
 	/// Послать сообщение в задачу.
 	/*!
 	  \param[in] msg Указатель на сообщение.
