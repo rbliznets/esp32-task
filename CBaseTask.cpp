@@ -49,15 +49,15 @@ void CBaseTask::init(const char *name, unsigned short usStack, UBaseType_t uxPri
 	xTaskCreatePinnedToCore(vTask, name, usStack, this, uxPriority, &mTaskHandle, coreID);
 }
 
-bool CBaseTask::sendMessage(STaskMessage *msg, uint32_t nFlag, TickType_t xTicksToWait, bool free_mem)
+bool CBaseTask::sendMessage(STaskMessage *msg, TickType_t xTicksToWait, bool free_mem)
 {
 	assert(msg != nullptr);
 
 	if (xQueueSend(mTaskQueue, msg, xTicksToWait) == pdPASS)
 	{
-		if (nFlag != 0)
+		if (mNotify != 0)
 		{
-			return (xTaskNotify(mTaskHandle, nFlag, eSetBits) == pdPASS);
+			return (xTaskNotify(mTaskHandle, mNotify, eSetBits) == pdPASS);
 		}
 		else
 			return true;
@@ -71,15 +71,15 @@ bool CBaseTask::sendMessage(STaskMessage *msg, uint32_t nFlag, TickType_t xTicks
 	}
 }
 
-bool CBaseTask::sendMessageFront(STaskMessage *msg, uint32_t nFlag, TickType_t xTicksToWait, bool free_mem)
+bool CBaseTask::sendMessageFront(STaskMessage *msg, TickType_t xTicksToWait, bool free_mem)
 {
 	assert(msg != nullptr);
 
 	if (xQueueSendToFront(mTaskQueue, msg, xTicksToWait) == pdPASS)
 	{
-		if (nFlag != 0)
+		if (mNotify != 0)
 		{
-			return (xTaskNotify(mTaskHandle, nFlag, eSetBits) == pdPASS);
+			return (xTaskNotify(mTaskHandle, mNotify, eSetBits) == pdPASS);
 		}
 		else
 			return true;
@@ -93,15 +93,15 @@ bool CBaseTask::sendMessageFront(STaskMessage *msg, uint32_t nFlag, TickType_t x
 	}
 }
 
-bool IRAM_ATTR CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken, uint32_t nFlag)
+bool IRAM_ATTR CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken)
 {
 	assert(msg != nullptr);
 
 	if (xQueueSendFromISR(mTaskQueue, msg, pxHigherPriorityTaskWoken) == pdPASS)
 	{
-		if (nFlag != 0)
+		if (mNotify != 0)
 		{
-			return (xTaskNotifyFromISR(mTaskHandle, nFlag, eSetBits, pxHigherPriorityTaskWoken) == pdPASS);
+			return (xTaskNotifyFromISR(mTaskHandle, mNotify, eSetBits, pxHigherPriorityTaskWoken) == pdPASS);
 		}
 		else
 			return true;

@@ -2,7 +2,7 @@
 	\file
 	\brief Базовый класс для реализации задачи FreeRTOS в многоядерном CPU.
     \authors Близнец Р.А. (r.bliznets@gmail.com)
-	\version 1.1.0.0
+	\version 1.2.0.0
 	\date 28.04.2020
 */
 
@@ -36,6 +36,7 @@ class CBaseTask
 protected:
 	TaskHandle_t mTaskHandle = nullptr; ///< Хэндлер задачи FreeRTOS.
 	QueueHandle_t mTaskQueue = nullptr; ///< Приемная очередь сообщений.
+	uint32_t mNotify = 0; 				///< Флаг очереди сообщений для Notify. Если 0, то не используется.
 
 	/// Функция задачи FreeRTOS.
 	/*!
@@ -53,33 +54,6 @@ protected:
 	  \return true в случае успеха.
 	*/
 	bool getMessage(STaskMessage *msg, TickType_t xTicksToWait = 0);
-
-	/// Послать сообщение в задачу.
-	/*!
-	  \param[in] msg Указатель на сообщение.
-	  \param[in] nFlag Флаг сообщения о не пустой очереди для задачи. Если 0, то механизм Notify не используется.
-	  \param[in] xTicksToWait Время ожидания в тиках.
-	  \param[in] free_mem вернуть память в кучу в случае неудачи.
-	  \return true в случае успеха.
-	*/
-	bool sendMessage(STaskMessage *msg, uint32_t nFlag, TickType_t xTicksToWait = 0, bool free_mem = false);
-	/// Послать сообщение в задачу в начало очереди.
-	/*!
-	  \param[in] msg Указатель на сообщение.
-	  \param[in] nFlag Флаг сообщения о не пустой очереди для задачи. Если 0, то механизм Notify не используется.
-	  \param[in] xTicksToWait Время ожидания в тиках.
-	  \param[in] free_mem вернуть память в кучу в случае неудачи.
-	  \return true в случае успеха.
-	*/
-	bool sendMessageFront(STaskMessage *msg, uint32_t nFlag, TickType_t xTicksToWait = 0, bool free_mem = false);
-	/// Послать сообщение в задачу из прерывания.
-	/*!
-	  \param[in] msg Указатель на сообщение.
-	  \param[out] pxHigherPriorityTaskWoken Флаг переключения задач.
-	  \param[in] nFlag Флаг сообщения о не пустой очереди для задачи. Если 0, то механизм Notify не используется.
-	  \return true в случае успеха.
-	*/
-	bool IRAM_ATTR sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken, uint32_t nFlag);
 
 public:
 	/// Начальная инициализация.
@@ -100,7 +74,7 @@ public:
 	  \param[out] pxHigherPriorityTaskWoken Флаг переключения задач.
 	  \return true в случае успеха.
 	*/
-	virtual bool IRAM_ATTR sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken) = 0;
+	bool IRAM_ATTR sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken);
 	/// Послать сообщение в задачу.
 	/*!
 	  \param[in] msg Указатель на сообщение.
@@ -108,7 +82,16 @@ public:
 	  \param[in] free вернуть память в кучу в случае неудачи.
 	  \return true в случае успеха.
 	*/
-	virtual bool sendMessage(STaskMessage *msg, TickType_t xTicksToWait = 0, bool free = false) = 0;
+	bool sendMessage(STaskMessage *msg, TickType_t xTicksToWait = 0, bool free = false);
+	/// Послать сообщение в задачу в начало очереди.
+	/*!
+	  \param[in] msg Указатель на сообщение.
+	  \param[in] nFlag Флаг сообщения о не пустой очереди для задачи. Если 0, то механизм Notify не используется.
+	  \param[in] xTicksToWait Время ожидания в тиках.
+	  \param[in] free_mem вернуть память в кучу в случае неудачи.
+	  \return true в случае успеха.
+	*/
+	bool sendMessageFront(STaskMessage *msg, TickType_t xTicksToWait = 0, bool free_mem = false);
 	/// Послать простое сообщение в задачу.
 	/*!
 	  \param[in] msgID Тип сообщения.

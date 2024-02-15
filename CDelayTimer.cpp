@@ -17,7 +17,7 @@ CDelayTimer::CDelayTimer()
 		.direction = GPTIMER_COUNT_UP,
 		.resolution_hz = 1000000, // 1MHz, 1 tick = 1us
 		.intr_priority = 0,
-		.flags = {1}};
+		.flags = {0}};
 	gptimer_event_callbacks_t cbs = {
 		.on_alarm = timer_on_alarm_cb // register user callback
 	};

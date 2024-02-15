@@ -71,29 +71,6 @@ protected:
 	/// Функция задачи.
 	virtual void run() override;
 
-	/// Послать сообщение в задачу.
-	/*!
-	  \param[in] msg Указатель на сообщение.
-	  \param[in] xTicksToWait Время ожидания в тиках.
-	  \param[in] free вернуть память в кучу в случае неудачи.
-	  \return true в случае успеха.
-	*/
-	inline bool sendMessage(STaskMessage *msg, TickType_t xTicksToWait = 0, bool free = false) override
-	{
-		return CBaseTask::sendMessage(msg, 0, xTicksToWait, free);
-	};
-
-	/// Послать сообщение в задачу из прерывания.
-	/*!
-	  \param[in] msg Указатель на сообщение.
-	  \param[out] pxHigherPriorityTaskWoken Флаг переключения задач.
-	  \return true в случае успеха.
-	*/
-	inline bool IRAM_ATTR sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken) override
-	{
-		return CBaseTask::sendMessageFromISR(msg, pxHigherPriorityTaskWoken, 0);
-	};
-
 	/// Вывести сообщение.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE_STRING или MSG_TRACE_STRING_REBOOT.
