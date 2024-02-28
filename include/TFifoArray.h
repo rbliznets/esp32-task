@@ -1,10 +1,9 @@
 /*!
 	\file
 	\brief Шаблон для FIFO буфера.
-	\authors Близнец Р.А.
+	\authors Близнец Р.А.(r.bliznets@gmail.com)
 	\version 1.0.0.0
 	\date 21.03.2022
-	\copyright (c) Copyright 2021, ООО "Глобал Ориент", Москва, Россия, http://www.glorient.ru/
 */
 
 #if !defined TFIFOARRAY_H
