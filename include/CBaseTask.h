@@ -64,7 +64,7 @@ public:
 	  \param[in] queueLength Максимальная длина очереди сообщений.
 	  \param[in] coreID Ядро CPU (0,1).
 	*/
-	virtual void init(const char *name, unsigned short usStack, UBaseType_t uxPriority, UBaseType_t queueLength, BaseType_t coreID = tskNO_AFFINITY);
+	void init(const char *name, unsigned short usStack, UBaseType_t uxPriority, UBaseType_t queueLength, BaseType_t coreID = tskNO_AFFINITY);
 	/// Деструктор.
 	virtual ~CBaseTask();
 
