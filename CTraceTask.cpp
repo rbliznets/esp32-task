@@ -2,7 +2,7 @@
 	\file
 	\brief Класс для вывода отладочной информации.
     \authors Близнец Р.А. (r.bliznets@gmail.com)
-	\version 1.3.0.0
+	\version 1.3.1.0
 	\date 15.09.2022
 
 	Один объект на приложение.
@@ -53,89 +53,76 @@ void CTraceTask::printHeader(uint64_t time, uint32_t n)
 #endif
 }
 
+bool CTraceTask::logMessage(STaskMessage& msg)
+{
+	switch (msg.msgID)
+	{
+	case MSG_TRACE_STRING:
+		printString((char *)msg.msgBody);
+		break;
+	case MSG_STOP_TIME:
+		printStop((char *)msg.msgBody);
+		break;
+	case MSG_PRINT_STRING:
+		printS((char *)msg.msgBody);
+		break;
+	case MSG_TRACE_STRING_REBOOT:
+		printString((char *)msg.msgBody);
+		vTaskDelay(pdMS_TO_TICKS(150));
+		esp_restart();
+		break;
+	case MSG_TRACE_UINT8:
+		printData8h((char *)msg.msgBody);
+		break;
+	case MSG_TRACE2_UINT8:
+		printData8h_2((char *)msg.msgBody);
+		break;
+	case MSG_TRACE_INT8:
+		printData8((char *)msg.msgBody);
+		break;
+	case MSG_TRACE2_INT8:
+		printData8_2((char *)msg.msgBody);
+		break;
+	case MSG_TRACE_UINT16:
+		printData16h((char *)msg.msgBody);
+		break;
+	case MSG_TRACE2_UINT16:
+		printData16h_2((char *)msg.msgBody);
+		break;
+	case MSG_TRACE_INT16:
+		printData16((char *)msg.msgBody);
+		break;
+	case MSG_TRACE2_INT16:
+		printData16_2((char *)msg.msgBody);
+		break;
+	case MSG_TRACE_UINT32:
+		printData32h((char *)msg.msgBody);
+		break;
+	case MSG_TRACE2_UINT32:
+		printData32h_2((char *)msg.msgBody);
+		break;
+	case MSG_TRACE_INT32:
+		printData32((char *)msg.msgBody);
+		break;
+	case MSG_TRACE2_INT32:
+		printData32_2((char *)msg.msgBody);
+		break;
+	default:
+		return false;
+	}
+	vPortFree(msg.msgBody);
+	return true;
+}
+
 void CTraceTask::run()
 {
 	STaskMessage msg;
 
 	while (getMessage(&msg, portMAX_DELAY))
 	{
-		switch (msg.msgID)
+		if(!logMessage(msg))
 		{
-		case MSG_TRACE_STRING:
-			printString((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_STOP_TIME:
-			printStop((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_PRINT_STRING:
-#ifdef CONFIG_DEBUG_TRACE_ESPLOG
-			ESP_LOGI("*","%s",(char *)msg.msgBody);
-#else
-			std::printf((char *)msg.msgBody);
-			std::printf("\n");
-#endif
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_TRACE_STRING_REBOOT:
-			printString((char *)msg.msgBody);
-			// std::printf("trace reboot...\n");
-			// vPortFree(msg.msgBody);
-			fflush(stdout);
-			esp_restart();
-			break;
-		case MSG_TRACE_UINT8:
-			printData8h((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_TRACE2_UINT8:
-			printData8h_2((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_TRACE_INT8:
-			printData8((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_TRACE2_INT8:
-			printData8_2((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_TRACE_UINT16:
-			printData16h((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_TRACE2_UINT16:
-			printData16h_2((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_TRACE_INT16:
-			printData16((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_TRACE2_INT16:
-			printData16_2((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_TRACE_UINT32:
-			printData32h((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_TRACE2_UINT32:
-			printData32h_2((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_TRACE_INT32:
-			printData32((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		case MSG_TRACE2_INT32:
-			printData32_2((char *)msg.msgBody);
-			vPortFree(msg.msgBody);
-			break;
-		default:
-			TRACE_WARNING("CTraceTask unknown message", msg.msgID);
-			break;
+			ESP_LOGW("*","CTraceTask unknown message %d", msg.msgID);
 		}
 		vTaskDelay(pdMS_TO_TICKS(2));//@@@@@@@@@@@@@@
 	}
@@ -430,6 +417,15 @@ void CTraceTask::printString(char *data)
 #else
     std::printf(m_header);
 	std::printf(": %d:%s\n", (int)(*errCode), strError);
+#endif
+}
+
+void CTraceTask::printS(char *str)
+{
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGI("*","%s",str);
+#else
+	std::printf("%s\n", str);
 #endif
 }
 

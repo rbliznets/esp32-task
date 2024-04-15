@@ -55,10 +55,10 @@ void CTraceList::init()
 void CTraceList::clear()
 {
 	lock();
-	for (auto x : m_list)
-	{
-		delete x;
-	}
+	// for (auto x : m_list)
+	// {
+	// 	delete x;
+	// }
 	m_list.clear();
 	unlock();
 }

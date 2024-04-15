@@ -2,7 +2,7 @@
 	\file
 	\brief Класс для вывода отладочной информации.
 	\authors Близнец Р.А.(r.bliznets@gmail.com)
-	\version 1.3.0.0
+	\version 1.3.1.0
 	\date 15.09.2022
 
 	Один объект на приложение.
@@ -51,14 +51,22 @@ protected:
 	  \param[in] n количество для усреднения.
 	*/
 	virtual void printHeader(uint64_t time, uint32_t n = 1);
-	/// Распечатать массив данных
+
+	/// Обработка сообщения вывода
 	/*!
-	  \param[in] strError Сообщение об ошибке.
-	  \param[in] data данные.
-	  \param[in] size размер данных.
-	  \param[in] tp ID типа данных.
+	  \param[in] msg Сообщение об ошибке.
+	  \return true если сообщение обработано.
 	*/
-	void traceData(const char *strError, void *data, uint32_t size, uint16_t tp = MSG_TRACE_UINT8);
+    bool logMessage(STaskMessage &msg);
+
+    /// Распечатать массив данных
+    /*!
+      \param[in] strError Сообщение об ошибке.
+      \param[in] data данные.
+      \param[in] size размер данных.
+      \param[in] tp ID типа данных.
+    */
+    void traceData(const char *strError, void *data, uint32_t size, uint16_t tp = MSG_TRACE_UINT8);
 	/// Распечатать массив данных
 	/*!
 	  \param[in] strError Сообщение об ошибке.
@@ -76,11 +84,16 @@ protected:
 	  \param[in] data Указатель на тело сообщения MSG_TRACE_STRING или MSG_TRACE_STRING_REBOOT.
 	*/
 	virtual void printString(char *data);
-	/// Вывести сообщение об интервале времени.
+	/// Вывести сообщение.
 	/*!
-	  \param[in] data Указатель на тело сообщения MSG_STOP_TIME.
+	  \param[in] str Указатель строку.
 	*/
-	virtual void printStop(char *data);
+    virtual void printS(char *str);
+    /// Вывести сообщение об интервале времени.
+    /*!
+      \param[in] data Указатель на тело сообщения MSG_STOP_TIME.
+    */
+    virtual void printStop(char *data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE_UINT8.
