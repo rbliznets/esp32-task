@@ -6,8 +6,7 @@
 	\date 31.03.2023
 */
 
-#if !defined CDELAYTIMER_H
-#define CDELAYTIMER_H
+#pragma once
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -75,5 +74,3 @@ public:
 	*/
 	int wait(uint32_t period, uint8_t xNotifyBit = 0);
 };
-
-#endif // CDELAYTIMER_H

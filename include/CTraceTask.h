@@ -9,8 +9,7 @@
 	Необходим чтобы не блокировать отлаживаемую задачу.
 */
 
-#if !defined CTRACETASK_H
-#define CTRACETASK_H
+#pragma once
 
 #include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
@@ -291,4 +290,3 @@ public:
 	void log(const char *str) override;
 };
 
-#endif // CTRACETASK_H

@@ -6,8 +6,7 @@
 	\date 28.04.2020
 */
 
-#if !defined CSOFTWARETIMER_H
-#define CSOFTWARETIMER_H
+#pragma once
 
 #include "CBaseTask.h"
 #include "freertos/timers.h"
@@ -86,4 +85,3 @@ public:
 	};
 };
 
-#endif // CSOFTWARETIMER_H

@@ -6,8 +6,7 @@
 	\date 28.04.2020
 */
 
-#if !defined CBASETASK_H
-#define CBASETASK_H
+#pragma once
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -129,5 +128,3 @@ public:
 	*/
 	inline TaskHandle_t getTask() {return mTaskHandle;};
 };
-
-#endif // CBASETASK_H

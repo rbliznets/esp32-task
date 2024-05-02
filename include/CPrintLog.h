@@ -6,8 +6,7 @@
 	\date 10.07.2020
 */
 
-#if !defined CPRINTLOG_H
-#define CPRINTLOG_H
+#pragma once
 
 #include "ITraceLog.h"
 
@@ -103,4 +102,3 @@ public:
 	};
 };
 
-#endif // CPRINTLOG_H

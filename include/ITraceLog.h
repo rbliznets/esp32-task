@@ -6,8 +6,7 @@
 	\date 10.07.2020
 */
 
-#if !defined ITRACELOG_H
-#define ITRACELOG_H
+#pragma once
 
 #include <cstdio>
 
@@ -123,4 +122,4 @@ public:
 	virtual void stopTime(const char *str, uint32_t n = 1) { trace(str, n, ESP_LOG_INFO, false); };
 };
 
-#endif // ITRACELOG_H
+

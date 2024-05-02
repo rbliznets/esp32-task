@@ -3,5 +3,6 @@ idf_component_register(SRCS "CDelayTimer.cpp" "CTraceTask.cpp" "CBaseTask.cpp"
                             "CPrintLog.cpp"
                             "CSoftwareTimer.cpp"
                             "CTrace.cpp"
+                            "CTraceJsonTask.cpp"
                     INCLUDE_DIRS "include"
                     REQUIRES esp_timer driver)

@@ -6,8 +6,7 @@
 	\date 10.07.2020
 */
 
-#if !defined CTRACE_H
-#define CTRACE_H
+#pragma once
 
 #include "sdkconfig.h"
 #include <stdint.h>
@@ -312,4 +311,3 @@ public:
 extern CTraceList traceLog; ///< Объект глобального списка зарегистрированных трассировщиков
 #endif
 
-#endif // CTRACE_H

@@ -6,8 +6,7 @@
 	\date 21.03.2022
 */
 
-#if !defined TFIFOARRAY_H
-#define TFIFOARRAY_H
+#pragma once
 
 #include <cstring>
 
@@ -136,4 +135,3 @@ public:
 	}
 };
 
-#endif // TFIFOARRAY_H

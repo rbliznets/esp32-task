@@ -6,8 +6,7 @@
 	\date 28.04.2020
 */
 
-#if !defined CLOCK_H
-#define CLOCK_H
+#pragma once
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
@@ -36,5 +35,3 @@ public:
 	/// Конструктор класса.
 	CLock();
 };
-
-#endif // CLOCK_H
