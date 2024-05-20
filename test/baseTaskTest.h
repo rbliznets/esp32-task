@@ -12,7 +12,7 @@
 
 #include "CBaseTask.h"
 
-#define BASETASKTEST_QUEUE_BIT 			(31)						///< Номер бита уведомления о сообщении в очереди.
+#define BASETASKTEST_QUEUE_BIT 			(1)						///< Номер бита уведомления о сообщении в очереди.
 #define BASETASKTEST_QUEUE_FLAG 		(1 << BASETASKTEST_QUEUE_BIT)	///< Флаг уведомления о сообщении в очереди.
 
 #define MSG_TERMINATE 0
@@ -27,29 +27,7 @@ protected:
 
 public:
     bool mFlag=false;
-
-	/// Послать сообщение в задачу.
-	/*!
-	  \param[in] msg Указатель на сообщение.
-	  \param[in] xTicksToWait Время ожидания в тиках.
-	  \param[in] free вернуть память в кучу в случае неудачи.
-	  \return true в случае успеха.
-	*/
-	inline bool sendMessage(STaskMessage* msg,TickType_t xTicksToWait=0, bool free=false)
-	{
-		return CBaseTask::sendMessage(msg, BASETASKTEST_QUEUE_FLAG,xTicksToWait,free);
-	};
-
-	/// Послать сообщение в задачу из прерывания.
-	/*!
-	  \param[in] msg Указатель на сообщение.
-	  \param[out] pxHigherPriorityTaskWoken Флаг переключения задач.
-	  \return true в случае успеха.
-	*/
-	inline bool sendMessageFromISR(STaskMessage* msg,BaseType_t *pxHigherPriorityTaskWoken) override
-	{
-		return CBaseTask::sendMessageFromISR(msg,pxHigherPriorityTaskWoken,BASETASKTEST_QUEUE_FLAG);
-	};
+	virtual ~CBaseTaskTest(){};
 };
 /*! @} */
 

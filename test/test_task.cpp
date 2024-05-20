@@ -93,10 +93,12 @@ TEST_CASE("CDelayTimer", "[task]")
 
 void CBaseTaskTest::run()
 {
+  mNotify = BIT(BASETASKTEST_QUEUE_BIT);
+
   uint32_t flags;
   STaskMessage msg;
 #ifdef CONFIG_DEBUG_CODE
-  TRACE("Task start", 0, false);
+  TRACE("Task start", mNotify, false);
 #endif
 
   for (;;)
