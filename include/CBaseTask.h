@@ -96,15 +96,16 @@ public:
 	  \param[in] msgID Тип сообщения.
 	  \param[in] shortParam Параметр команды.
 	  \param[in] paramID Поле команды.
+	  \param[in] xTicksToWait Время ожидания в тиках.
 	  \return true в случае успеха.
 	*/
-	inline bool sendCmd(uint16_t msgID, uint16_t shortParam = 0, uint32_t paramID = 0)
+	inline bool sendCmd(uint16_t msgID, uint16_t shortParam = 0, uint32_t paramID = 0, TickType_t xTicksToWait = 0)
 	{
 		STaskMessage msg;
 		msg.msgID = msgID;
 		msg.shortParam = shortParam;
 		msg.paramID = paramID;
-		return sendMessage(&msg, 0, false);
+		return sendMessage(&msg, xTicksToWait, false);
 	}
 
 	/// Выделить память сообщению.
