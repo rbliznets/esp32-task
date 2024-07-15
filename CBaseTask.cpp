@@ -97,7 +97,7 @@ bool IRAM_ATTR CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHi
 {
 	assert(msg != nullptr);
 
-	if (xQueueSendFromISR(mTaskQueue, msg, pxHigherPriorityTaskWoken) == pdPASS)
+	if (xQueueOverwriteFromISR(mTaskQueue, msg, pxHigherPriorityTaskWoken) == pdPASS)
 	{
 		if (mNotify != 0)
 		{
