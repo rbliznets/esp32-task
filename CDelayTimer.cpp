@@ -2,7 +2,7 @@
 	\file
 	\brief Аппаратный таймер под задачи FreeRTOS.
     \authors Близнец Р.А. (r.bliznets@gmail.com)
-	\version 1.2.0.0
+	\version 1.3.0.0
 	\date 31.03.2023
 */
 
@@ -10,8 +10,10 @@
 #include <cstdio>
 #include "CTrace.h"
 
-CDelayTimer::CDelayTimer()
+CDelayTimer::CDelayTimer(uint8_t xNotifyBit, uint16_t timerCmd):mNotifyBit(xNotifyBit), mTimerCmd(timerCmd)
 {
+	assert(xNotifyBit < 32);
+
 	gptimer_config_t mTimer_config = {
 		.clk_src = GPTIMER_CLK_SRC_DEFAULT,
 		.direction = GPTIMER_COUNT_UP,
@@ -55,11 +57,15 @@ IRAM_ATTR bool CDelayTimer::timer_on_alarm_cb(gptimer_handle_t timer, const gpti
 
 int CDelayTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 {
+	assert(xNotifyBit < 32);
+	assert(pdMS_TO_TICKS(period) > 0);
+
 	esp_err_t er;
 	stop();
 
 	mTaskToNotify = xTaskGetCurrentTaskHandle();
 	mNotifyBit = xNotifyBit;
+	mEventType = ETimerEvent::Notify;
 	m_alarm_config.alarm_count = period;
 	m_alarm_config.flags.auto_reload_on_alarm = autoRefresh;
 	if ((er = gptimer_set_alarm_action(mTimerHandle, &m_alarm_config)) != ESP_OK)
@@ -86,6 +92,46 @@ int CDelayTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 	mRun = true;
 	return 0;
 }
+
+int CDelayTimer::start(CBaseTask *task, ETimerEvent event, uint32_t period, bool autoRefresh)
+{
+	assert(task != nullptr);
+	assert(pdMS_TO_TICKS(period) > 0);
+
+	esp_err_t er;
+	stop();
+
+	mEventType = event;
+	mTask = task;
+	mTaskToNotify = mTask->getTask();
+
+	m_alarm_config.alarm_count = period;
+	m_alarm_config.flags.auto_reload_on_alarm = autoRefresh;
+	if ((er = gptimer_set_alarm_action(mTimerHandle, &m_alarm_config)) != ESP_OK)
+	{
+		TRACE_ERROR("CDelayTimer:gptimer_set_alarm_action failed!", er);
+		return -3;
+	}
+	if ((er = gptimer_enable(mTimerHandle)) != ESP_OK)
+	{
+		TRACE_ERROR("CDelayTimer:gptimer_enable failed", er);
+		return -4;
+	}
+	if ((er = gptimer_set_raw_count(mTimerHandle, 0)) != ESP_OK)
+	{
+		TRACE_ERROR("CDelayTimer:gptimer_set_raw_count failed", er);
+		return -5;
+	}
+	if ((er = gptimer_start(mTimerHandle)) != ESP_OK)
+	{
+		TRACE_ERROR("CDelayTimer:gptimer_start failed!", er);
+		gptimer_disable(mTimerHandle);
+		return -6;
+	}
+	mRun = true;
+	return 0;
+}
+
 
 int CDelayTimer::stop()
 {
@@ -117,6 +163,16 @@ int CDelayTimer::wait(uint32_t period, uint8_t xNotifyBit)
 IRAM_ATTR void CDelayTimer::timer()
 {
 	BaseType_t do_yield = pdFALSE;
-	xTaskNotifyFromISR(mTaskToNotify, (1 << mNotifyBit), eSetBits, &do_yield);
+	if (mEventType == ETimerEvent::Notify)
+		xTaskNotifyFromISR(mTaskToNotify, (1 << mNotifyBit), eSetBits, &do_yield);
+	else
+	{
+		STaskMessage msg;
+		msg.msgID = mTimerCmd;
+	 	if (mEventType == ETimerEvent::SendBack)
+			mTask->sendMessageFromISR(&msg, &do_yield);
+		else
+			mTask->sendMessageFrontFromISR(&msg, &do_yield);
+	}
 	// portYIELD_FROM_ISR(do_yield);
 }

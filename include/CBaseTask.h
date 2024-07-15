@@ -2,7 +2,7 @@
 	\file
 	\brief Базовый класс для реализации задачи FreeRTOS в многоядерном CPU.
     \authors Близнец Р.А. (r.bliznets@gmail.com)
-	\version 1.2.0.0
+	\version 1.3.0.0
 	\date 28.04.2020
 */
 
@@ -82,6 +82,14 @@ public:
 	  \return true в случае успеха.
 	*/
 	bool sendMessage(STaskMessage *msg, TickType_t xTicksToWait = 0, bool free = false);
+
+	/// Послать сообщение в задачу из прерывания в начало или с перезаписью.
+	/*!
+	  \param[in] msg Указатель на сообщение.
+	  \param[out] pxHigherPriorityTaskWoken Флаг переключения задач.
+	  \return true в случае успеха.
+	*/
+	bool IRAM_ATTR sendMessageFrontFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken);
 	/// Послать сообщение в задачу в начало очереди.
 	/*!
 	  \param[in] msg Указатель на сообщение.

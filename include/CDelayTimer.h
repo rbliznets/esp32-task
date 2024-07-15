@@ -2,15 +2,16 @@
 	\file
 	\brief Аппаратный таймер под задачи FreeRTOS.
     \authors Близнец Р.А. (r.bliznets@gmail.com)
-	\version 1.2.0.0
+	\version 1.3.0.0
 	\date 31.03.2023
 */
 
 #pragma once
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "driver/gptimer.h"
+#include "CBaseTask.h"
+#include "CSoftwareTimer.h"
+
 
 /// Микросекундный таймер под задачи FreeRTOS.
 class CDelayTimer
@@ -35,6 +36,9 @@ protected:
 	TaskHandle_t mTaskToNotify; ///< Указатель на задачу, ожидающую события от таймера.
 	uint8_t mNotifyBit;			///< Номер бита для оповещения задачи о событии таймера (не более 31).
 	bool mAutoRefresh;			///< Флаг автозагрузки таймера.
+	uint16_t mTimerCmd;					  ///< Номер команды для оповещения задачи о событии таймера (не более 31).
+	CBaseTask *mTask = nullptr; ///< Указатель на задачу, ожидающую события от таймера.
+	ETimerEvent mEventType;		///< Метод сообщения.
 
 	/// Функция, вызываемая по событию в таймере.
 	inline void timer();
@@ -43,8 +47,10 @@ public:
 	/// Конструктор.
 	/*!
 		Захват таймера
+	  \param[in] xNotifyBit Номер бита для оповещения задачи о событии таймера.
+	  \param[in] timerCmd Номер команды для оповещения задачи о событии таймера.
 	*/
-	CDelayTimer();
+	CDelayTimer(uint8_t xNotifyBit=0, uint16_t timerCmd = 10000);
 	/// Деструктор.
 	~CDelayTimer();
 
@@ -58,6 +64,7 @@ public:
 	  \sa Stop()
 	*/
 	int start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh = false);
+	int start(CBaseTask *task, ETimerEvent event, uint32_t period, bool autoRefresh = false);
 	/// Остановка таймера.
 	/*!
 	  \return 0 - в случае успеха.

@@ -15,7 +15,8 @@
 enum class ETimerEvent
 {
 	Notify,	 ///< Через notify.
-	SendBack ///< Через очередь.
+	SendBack, ///< Через очередь.
+	SendFront ///< Через очередь.
 };
 
 /// Программный таймер под задачи FreeRTOS.

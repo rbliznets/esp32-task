@@ -2,7 +2,7 @@
 	\file
 	\brief Базовый класс для реализации задачи FreeRTOS в многоядерном CPU.
     \authors Близнец Р.А. (r.bliznets@gmail.com)
-	\version 1.1.0.0
+	\version 1.3.0.0
 	\date 28.04.2020
 */
 
@@ -108,6 +108,25 @@ bool IRAM_ATTR CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHi
 	}
 	else
 		return false;
+}
+
+bool IRAM_ATTR CBaseTask::sendMessageFrontFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken)
+{
+	assert(msg != nullptr);
+
+	if (xQueueSendToFrontFromISR(mTaskQueue, msg, pxHigherPriorityTaskWoken) != pdPASS)
+	{
+		if (xQueueOverwriteFromISR(mTaskQueue, msg, pxHigherPriorityTaskWoken) != pdPASS)
+		{
+			return false;
+		}
+	}
+	if (mNotify != 0)
+	{
+		return (xTaskNotifyFromISR(mTaskHandle, mNotify, eSetBits, pxHigherPriorityTaskWoken) == pdPASS);
+	}
+	else
+		return true;
 }
 
 bool CBaseTask::getMessage(STaskMessage *msg, TickType_t xTicksToWait)
