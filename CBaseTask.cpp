@@ -1,7 +1,7 @@
 /*!
 	\file
 	\brief Базовый класс для реализации задачи FreeRTOS в многоядерном CPU.
-    \authors Близнец Р.А. (r.bliznets@gmail.com)
+	\authors Близнец Р.А. (r.bliznets@gmail.com)
 	\version 1.3.0.0
 	\date 28.04.2020
 */
@@ -18,7 +18,7 @@ void CBaseTask::vTask(void *pvParameters)
 	vQueueDelete(((CBaseTask *)pvParameters)->mTaskQueue);
 	((CBaseTask *)pvParameters)->mTaskQueue = nullptr;
 	ESP_LOGI(pcTaskGetName(((CBaseTask *)pvParameters)->mTaskHandle), "exit");
-#if (INCLUDE_vTaskDelete == 1) //????
+#if (INCLUDE_vTaskDelete == 1)
 	((CBaseTask *)pvParameters)->mTaskHandle = nullptr;
 	vTaskDelete(nullptr);
 #else
@@ -29,7 +29,7 @@ void CBaseTask::vTask(void *pvParameters)
 
 CBaseTask::~CBaseTask()
 {
-#if (INCLUDE_vTaskDelete == 1) //????
+#if (INCLUDE_vTaskDelete == 1)
 	if (mTaskHandle != nullptr)
 	{
 		vTaskDelete(mTaskHandle);
@@ -97,7 +97,7 @@ bool IRAM_ATTR CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHi
 {
 	assert(msg != nullptr);
 
-	if (xQueueOverwriteFromISR(mTaskQueue, msg, pxHigherPriorityTaskWoken) == pdPASS)
+	if (xQueueSendToBackFromISR(mTaskQueue, msg, pxHigherPriorityTaskWoken) == pdPASS)
 	{
 		if (mNotify != 0)
 		{
@@ -107,26 +107,30 @@ bool IRAM_ATTR CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHi
 			return true;
 	}
 	else
+	{
+		TRACE_FROM_ISR(pcTaskGetName(mTaskHandle), msg->msgID, false, pxHigherPriorityTaskWoken);
 		return false;
+	}
 }
 
 bool IRAM_ATTR CBaseTask::sendMessageFrontFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken)
 {
 	assert(msg != nullptr);
 
-	if (xQueueSendToFrontFromISR(mTaskQueue, msg, pxHigherPriorityTaskWoken) != pdPASS)
+	if (xQueueSendToFrontFromISR(mTaskQueue, msg, pxHigherPriorityTaskWoken) == pdPASS)
 	{
-		if (xQueueOverwriteFromISR(mTaskQueue, msg, pxHigherPriorityTaskWoken) != pdPASS)
+		if (mNotify != 0)
 		{
-			return false;
+			return (xTaskNotifyFromISR(mTaskHandle, mNotify, eSetBits, pxHigherPriorityTaskWoken) == pdPASS);
 		}
-	}
-	if (mNotify != 0)
-	{
-		return (xTaskNotifyFromISR(mTaskHandle, mNotify, eSetBits, pxHigherPriorityTaskWoken) == pdPASS);
+		else
+			return true;
 	}
 	else
-		return true;
+	{
+		TRACE_FROM_ISR(pcTaskGetName(mTaskHandle), msg->msgID, false, pxHigherPriorityTaskWoken);
+		return false;
+	}
 }
 
 bool CBaseTask::getMessage(STaskMessage *msg, TickType_t xTicksToWait)
