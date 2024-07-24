@@ -44,7 +44,7 @@ menu "Tasks"
     endchoice
 
     choice
-        depends on !DEBUG_TRACE_NONE
+        depends on !DEBUG_TRACE_NONE && DEBUG_CODE
         prompt "Choose the method of print"
         default DEBUG_TRACE_ESPLOG
 
