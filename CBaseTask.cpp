@@ -17,8 +17,8 @@ void CBaseTask::vTask(void *pvParameters)
 	((CBaseTask *)pvParameters)->run();
 	vQueueDelete(((CBaseTask *)pvParameters)->mTaskQueue);
 	((CBaseTask *)pvParameters)->mTaskQueue = nullptr;
-	ESP_LOGI(pcTaskGetName(((CBaseTask *)pvParameters)->mTaskHandle), "exit");
 #if (INCLUDE_vTaskDelete == 1)
+	ESP_LOGD(pcTaskGetName(((CBaseTask *)pvParameters)->mTaskHandle), "exit");
 	((CBaseTask *)pvParameters)->mTaskHandle = nullptr;
 	vTaskDelete(nullptr);
 #else
@@ -32,9 +32,9 @@ CBaseTask::~CBaseTask()
 #if (INCLUDE_vTaskDelete == 1)
 	if (mTaskHandle != nullptr)
 	{
-		vTaskDelete(mTaskHandle);
 		if (mTaskQueue != nullptr)
 			vQueueDelete(mTaskQueue);
+		vTaskDelete(mTaskHandle);
 	}
 #endif
 }
