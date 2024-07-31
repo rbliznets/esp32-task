@@ -149,7 +149,7 @@
 		if (std::is_base_of_v<ITraceLog, typeof(*this)>)        \
 			ESP_LOGW("Trace", "%s: %d", s, x);                  \
 		else                                                    \
-			traceLog.trace((char *)s, x, ESP_LOG_WARNg, false); \
+			traceLog.trace((char *)s, x, ESP_LOG_WARN, false); \
 	}
 #endif
 
