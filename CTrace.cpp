@@ -66,7 +66,7 @@ void CTraceList::clear()
 void CTraceList::trace(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot)
 {
 	lock();
-	for (auto x : m_list)
+	for (auto& x : m_list)
 	{
 		x->trace(strError, errCode, level, reboot);
 	}
@@ -80,12 +80,12 @@ void CTraceList::trace(const char *strError, int32_t errCode, esp_log_level_t le
 	}
 }
 
-void CTraceList::traceFromISR(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot, BaseType_t *pxHigherPriorityTaskWoken)
+void CTraceList::traceFromISR(const char *strError, int16_t errCode, BaseType_t *pxHigherPriorityTaskWoken)
 {
 	// lock();
-	for (auto x : m_list)
+	for (auto& x : m_list)
 	{
-		x->traceFromISR(strError, errCode, level, reboot, pxHigherPriorityTaskWoken);
+		x->traceFromISR(strError, errCode, pxHigherPriorityTaskWoken);
 	}
 	// unlock();
 }
@@ -93,7 +93,7 @@ void CTraceList::traceFromISR(const char *strError, int32_t errCode, esp_log_lev
 void CTraceList::trace(const char *strError, uint8_t *data, uint32_t size)
 {
 	lock();
-	for (auto x : m_list)
+	for (auto& x : m_list)
 	{
 		x->trace(strError, data, size);
 	}
@@ -103,7 +103,7 @@ void CTraceList::trace(const char *strError, uint8_t *data, uint32_t size)
 void CTraceList::trace(const char *strError, int8_t *data, uint32_t size)
 {
 	lock();
-	for (auto x : m_list)
+	for (auto& x : m_list)
 	{
 		x->trace(strError, data, size);
 	}
@@ -113,7 +113,7 @@ void CTraceList::trace(const char *strError, int8_t *data, uint32_t size)
 void CTraceList::trace(const char *strError, uint16_t *data, uint32_t size)
 {
 	lock();
-	for (auto x : m_list)
+	for (auto& x : m_list)
 	{
 		x->trace(strError, data, size);
 	}
@@ -123,7 +123,7 @@ void CTraceList::trace(const char *strError, uint16_t *data, uint32_t size)
 void CTraceList::trace(const char *strError, int16_t *data, uint32_t size)
 {
 	lock();
-	for (auto x : m_list)
+	for (auto& x : m_list)
 	{
 		x->trace(strError, data, size);
 	}
@@ -133,7 +133,7 @@ void CTraceList::trace(const char *strError, int16_t *data, uint32_t size)
 void CTraceList::trace(const char *strError, uint32_t *data, uint32_t size)
 {
 	lock();
-	for (auto x : m_list)
+	for (auto& x : m_list)
 	{
 		x->trace(strError, data, size);
 	}
@@ -143,7 +143,7 @@ void CTraceList::trace(const char *strError, uint32_t *data, uint32_t size)
 void CTraceList::trace(const char *strError, int32_t *data, uint32_t size)
 {
 	lock();
-	for (auto x : m_list)
+	for (auto& x : m_list)
 	{
 		x->trace(strError, data, size);
 	}
@@ -153,7 +153,7 @@ void CTraceList::trace(const char *strError, int32_t *data, uint32_t size)
 void CTraceList::log(const char *str)
 {
 	lock();
-	for (auto x : m_list)
+	for (auto& x : m_list)
 	{
 		x->log(str);
 	}
@@ -163,7 +163,7 @@ void CTraceList::log(const char *str)
 void CTraceList::startTime()
 {
 	lock();
-	for (auto x : m_list)
+	for (auto& x : m_list)
 	{
 		x->startTime();
 	}
@@ -173,7 +173,7 @@ void CTraceList::startTime()
 void CTraceList::stopTime(const char *str, uint32_t n)
 {
 	lock();
-	for (auto x : m_list)
+	for (auto& x : m_list)
 	{
 		x->stopTime(str, n);
 	}

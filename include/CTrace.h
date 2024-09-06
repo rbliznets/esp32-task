@@ -2,7 +2,7 @@
 	\file
 	\brief Вывод сообщения об ошибке.
 	\authors Близнец Р.А.(r.bliznets@gmail.com)
-	\version 1.3.0.0
+	\version 1.3.1.0
 	\date 10.07.2020
 */
 
@@ -59,10 +59,9 @@
 /*!
 	\param[in] str Сообщение об ошибке.
 	\param[in] code Код ошибки.
-	\param[in] reboot Флаг перезагрузки.
 	\param[in|out] pxHigherPriorityTaskWoken Флаг переключения задач.
 */
-#define TRACE_FROM_ISR(str, code, reboot, pxHigherPriorityTaskWoken) traceLog.traceFromISR((char *)str, code, ESP_LOG_INFO, reboot, pxHigherPriorityTaskWoken)
+#define TRACE_FROM_ISR(str, code, pxHigherPriorityTaskWoken) traceLog.traceFromISR((char *)str, code, pxHigherPriorityTaskWoken)
 
 /// Метод трассировки массива данных
 /*!
@@ -229,11 +228,9 @@ public:
 	/*!
 	  \param[in] strError Сообщение об ошибке.
 	  \param[in] errCode Код ошибки.
-	  \param[in] level Уровень вывода сообщения.
-	  \param[in] reboot Флаг перезагрузки.
 	  \param[in|out] pxHigherPriorityTaskWoken Флаг переключения задач.
 	*/
-	virtual void IRAM_ATTR traceFromISR(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot, BaseType_t *pxHigherPriorityTaskWoken) override;
+	virtual void IRAM_ATTR traceFromISR(const char *strError, int16_t errCode, BaseType_t *pxHigherPriorityTaskWoken) override;
 
 	/// Виртуальный метод массива данных
 	/*!

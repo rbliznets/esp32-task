@@ -57,6 +57,9 @@ bool CTraceTask::logMessage(STaskMessage& msg)
 {
 	switch (msg.msgID)
 	{
+	case MSG_TRACE_ISR_STRING:
+		printIsrString((char *)msg.msgBody,(int16_t)msg.shortParam);
+		return true;
 	case MSG_TRACE_STRING:
 		printString((char *)msg.msgBody);
 		break;
@@ -125,6 +128,7 @@ void CTraceTask::run()
 			ESP_LOGW("*","CTraceTask unknown message %d", msg.msgID);
 		}
 		vTaskDelay(pdMS_TO_TICKS(2));//@@@@@@@@@@@@@@
+		// printf("%ld\n",uxTaskGetStackHighWaterMark2(nullptr));
 	}
 }
 
@@ -404,6 +408,15 @@ void CTraceTask::printData8_2(char *data)
 #endif
 }
 
+void CTraceTask::printIsrString(char *strError, int16_t errCode)
+{
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
+	ESP_LOGE("ISR","%d:%s",errCode, strError);
+#else
+	std::printf("%d:%s\n", errCode, strError);
+#endif
+}
+
 void CTraceTask::printString(char *data)
 {
 	uint64_t *res = (uint64_t *)data;
@@ -477,37 +490,13 @@ void CTraceTask::trace(const char *strError, int32_t errCode, esp_log_level_t le
 	}
 }
 
-void CTraceTask::traceFromISR(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot, BaseType_t *pxHigherPriorityTaskWoken)
+void CTraceTask::traceFromISR(const char *strError, int16_t errCode, BaseType_t *pxHigherPriorityTaskWoken)
 {
 	STaskMessage msg;
-	taskENTER_CRITICAL_ISR(&mMut);
-	uint64_t tm = getTimer(AUTO_TIMER);
-	taskEXIT_CRITICAL_ISR(&mMut);
-	if (errCode != 0x7fffffff)
-	{
-		int ln = 8 + 4 + 1 + 1;
-		if (strError != nullptr)
-		{
-			ln += std::strlen(strError);
-		}
-		char *str;
-		if (reboot)
-			str = (char *)allocNewMsg(&msg, MSG_TRACE_STRING_REBOOT, ln);
-		else
-			str = (char *)allocNewMsg(&msg, MSG_TRACE_STRING, ln);
-		std::memcpy(str, &tm, 8);
-		std::memcpy(&str[8], &errCode, 4);
-		str[12] = (uint8_t)level;
-		if (strError != nullptr)
-		{
-			std::strcpy(&str[13], strError);
-		}
-		else
-		{
-			str[ln - 1] = 0;
-		}
-		sendMessageFromISR(&msg, pxHigherPriorityTaskWoken);
-	}
+	msg.msgID= MSG_TRACE_ISR_STRING;
+	msg.shortParam = (uint16_t)errCode;
+	msg.msgBody = (void*)strError;
+	sendMessageFrontFromISR(&msg, pxHigherPriorityTaskWoken);
 }
 
 void CTraceTask::traceData(const char *strError, void *data, uint32_t size, uint16_t tp)

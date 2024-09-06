@@ -18,6 +18,7 @@
 #include "CBaseTask.h"
 #include "ITraceLog.h"
 
+#define MSG_TRACE_ISR_STRING 5024	 ///< ID сообщения вывода строки из прерывания.
 #define MSG_TRACE_STRING 5025		 ///< ID сообщения вывода строки.
 #define MSG_TRACE_STRING_REBOOT 5026 ///< ID сообщения вывода строки и перезагрузки (из прерывания).
 #define MSG_TRACE_UINT8 5027		 ///< ID сообщения вывода массива uint8_t.
@@ -56,16 +57,16 @@ protected:
 	  \param[in] msg Сообщение об ошибке.
 	  \return true если сообщение обработано.
 	*/
-    bool logMessage(STaskMessage &msg);
+	bool logMessage(STaskMessage &msg);
 
-    /// Распечатать массив данных
-    /*!
-      \param[in] strError Сообщение об ошибке.
-      \param[in] data данные.
-      \param[in] size размер данных.
-      \param[in] tp ID типа данных.
-    */
-    void traceData(const char *strError, void *data, uint32_t size, uint16_t tp = MSG_TRACE_UINT8);
+	/// Распечатать массив данных
+	/*!
+	  \param[in] strError Сообщение об ошибке.
+	  \param[in] data данные.
+	  \param[in] size размер данных.
+	  \param[in] tp ID типа данных.
+	*/
+	void traceData(const char *strError, void *data, uint32_t size, uint16_t tp = MSG_TRACE_UINT8);
 	/// Распечатать массив данных
 	/*!
 	  \param[in] strError Сообщение об ошибке.
@@ -80,6 +81,12 @@ protected:
 
 	/// Вывести сообщение.
 	/*!
+	  \param[in] strError Указатель строку.
+	  \param[in] errCode Код ошибки.
+	*/
+	virtual void printIsrString(char *strError, int16_t errCode);
+	/// Вывести сообщение.
+	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE_STRING или MSG_TRACE_STRING_REBOOT.
 	*/
 	virtual void printString(char *data);
@@ -87,12 +94,12 @@ protected:
 	/*!
 	  \param[in] str Указатель строку.
 	*/
-    virtual void printS(char *str);
-    /// Вывести сообщение об интервале времени.
-    /*!
-      \param[in] data Указатель на тело сообщения MSG_STOP_TIME.
-    */
-    virtual void printStop(char *data);
+	virtual void printS(char *str);
+	/// Вывести сообщение об интервале времени.
+	/*!
+	  \param[in] data Указатель на тело сообщения MSG_STOP_TIME.
+	*/
+	virtual void printStop(char *data);
 	/// Вывести массив.
 	/*!
 	  \param[in] data Указатель на тело сообщения MSG_TRACE_UINT8.
@@ -153,9 +160,9 @@ protected:
 	  \param[in] data Указатель на тело сообщения MSG_TRACE2_INT32.
 	*/
 	virtual void printData32_2(char *data);
-	
+
 	/// Деструктор.
-	virtual ~CTraceTask(){};
+	virtual ~CTraceTask() {};
 
 public:
 	/// Единственный экземпляр класса.
@@ -190,10 +197,8 @@ public:
 	/*!
 	  \param[in] strError Сообщение об ошибке.
 	  \param[in] errCode Код ошибки.
-	  \param[in] level Уровень вывода сообщения.
-	  \param[in] reboot Флаг перезагрузки.
 	*/
-	virtual void IRAM_ATTR traceFromISR(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot, BaseType_t *pxHigherPriorityTaskWoken) override;
+	virtual void IRAM_ATTR traceFromISR(const char *strError, int16_t errCode, BaseType_t *pxHigherPriorityTaskWoken) override;
 
 	/// Виртуальный метод массива данных
 	/*!
@@ -289,4 +294,3 @@ public:
 	*/
 	void log(const char *str) override;
 };
-
