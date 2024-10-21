@@ -157,9 +157,11 @@
 #define PRINT(str)
 
 #define TRACE(str, code, reboot)
+#define TRACE_W(str, code, reboot)
+#define TRACE_E(str, code, reboot) 
 #define TDEC(str, code)
 #define THEX(str, code)
-#define TRACE_FROM_ISR(str, code, reboot, pxHigherPriorityTaskWoken)
+#define TRACE_FROM_ISR(str, code, pxHigherPriorityTaskWoken)
 #define TRACEDATA(str, data, size)
 
 #define STARTTIMESHOT()
@@ -178,13 +180,13 @@
 	\param[in] str Сообщение об ошибке.
 	\param[in] x Код ошибки.
 */
-#define TRACE_ERROR(s, x) ESP_LOGE(typeid(*this), "%s: %d", s, x)
+#define TRACE_ERROR(s, x) ESP_LOGE(typeid(*this).name(), "%s: %d", s, x)
 /// Вывод предупреждения из метода класса.
 /*!
 	\param[in] str Сообщение об ошибке.
 	\param[in] x Код ошибки.
 */
-#define TRACE_WARNING(s, x) ESP_LOGW(typeid(*this), "%s: %d", s, x)
+#define TRACE_WARNING(s, x) ESP_LOGW(typeid(*this).name(), "%s: %d", s, x)
 #else
 /// Вывод ошибки из метода класса.
 /*!
