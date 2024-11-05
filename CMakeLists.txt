@@ -5,4 +5,4 @@ idf_component_register(SRCS "CDelayTimer.cpp" "CTraceTask.cpp" "CBaseTask.cpp"
                             "CTrace.cpp"
                             "CTraceJsonTask.cpp"
                     INCLUDE_DIRS "include"
-                    REQUIRES esp_timer driver)
+                    REQUIRES esp_timer esp_driver_gptimer)
