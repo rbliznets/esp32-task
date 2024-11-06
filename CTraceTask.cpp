@@ -421,7 +421,9 @@ void CTraceTask::printString(char *data)
 {
 	uint64_t *res = (uint64_t *)data;
 	int32_t *errCode = (int32_t *)&data[8];
+#ifdef CONFIG_DEBUG_TRACE_ESPLOG
 	esp_log_level_t level = (esp_log_level_t)data[12];
+#endif
 	char *strError = &data[13];
 
 	printHeader(*res);
