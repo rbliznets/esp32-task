@@ -119,6 +119,9 @@ bool CTraceTask::logMessage(STaskMessage& msg)
 
 void CTraceTask::run()
 {
+#ifndef CONFIG_FREERTOS_CHECK_STACKOVERFLOW_NONE
+	UBaseType_t m1 = uxTaskGetStackHighWaterMark2(nullptr);
+#endif 
 	STaskMessage msg;
 
 	while (getMessage(&msg, portMAX_DELAY))
@@ -127,8 +130,18 @@ void CTraceTask::run()
 		{
 			ESP_LOGW("*","CTraceTask unknown message %d", msg.msgID);
 		}
-		vTaskDelay(pdMS_TO_TICKS(2));//@@@@@@@@@@@@@@
-		// printf("%ld\n",uxTaskGetStackHighWaterMark2(nullptr));
+		vTaskDelay(pdMS_TO_TICKS(2));
+#ifndef CONFIG_FREERTOS_CHECK_STACKOVERFLOW_NONE
+		UBaseType_t m2 = uxTaskGetStackHighWaterMark2(nullptr);
+		if (m2 != m1)
+		{
+			m1 = m2;
+			if(m1 > 100)
+				ESP_LOGI("*","free trace stack %d", m2);
+			else
+				ESP_LOGW("*","free trace stack %d", m2);
+		}
+#endif
 	}
 }
 
