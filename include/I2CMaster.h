@@ -1,9 +1,9 @@
 /*!
-	\file
-	\brief Класс инициализации i2c в режиме мастер.
+    \file
+    \brief Класс инициализации i2c в режиме мастер.
     \authors Близнец Р.А. (r.bliznets@gmail.com)
-	\version 0.1.0.0
-	\date 11.11.2024
+    \version 1.0.0.0
+    \date 11.11.2024
 */
 
 #include "driver/i2c_master.h"
@@ -12,17 +12,17 @@
 /// @brief состояние I2C
 struct SI2CMater
 {
-    int16_t i2c_sda = -1; ///< GPIO для I2C SDA
-    int16_t i2c_scl = -1; ///< GPIO для I2C SCL
-    int16_t count = 0; ///< Количество инициализаций
+    int16_t i2c_sda = -1;               ///< GPIO для I2C SDA
+    int16_t i2c_scl = -1;               ///< GPIO для I2C SCL
+    int16_t count = 0;                  ///< Количество инициализаций
     i2c_master_bus_handle_t bus_handle; ///< I2C bus handle
 };
 
 /// @brief Класс инициализации i2c в режиме мастер.
-class I2CMaster  : public CLock
+class I2CMaster : public CLock
 {
 private:
-	static I2CMaster *theSingleInstance; ///< Единственный экземпляр
+    static I2CMaster *theSingleInstance; ///< Единственный экземпляр
 
 protected:
     SI2CMater m_i2c[I2C_NUM_MAX]; ///< Структура для хранения параметров
@@ -33,11 +33,11 @@ protected:
     ~I2CMaster();
 
 public:
-	/// @brief  Единственный экземпляр класса.
-	/// @return Указатель на I2CMaster
-	static I2CMaster *Instance();
-	/// @brief Освобождение ресурсов задачи
-	static void free();
+    /// @brief  Единственный экземпляр класса.
+    /// @return Указатель на I2CMaster
+    static I2CMaster *Instance();
+    /// @brief Освобождение ресурсов задачи
+    static void free();
 
     /// @brief Инициализация I2C
     /// @param i2c_num Номер I2C
@@ -50,6 +50,12 @@ public:
     /// @param i2c_num Номер I2C
     /// @return true - успешно, false - ошибка
     bool take(int16_t i2c_num);
+
+    /// @brief Проверить наличие устройства
+    /// @param i2c_num Номер I2C
+    /// @param address Адрес устройства
+    /// @return true - успешно, false - ошибка
+    bool probe(int16_t i2c_num, uint16_t address);
 
     /// @brief добавить устройство
     /// @param i2c_num Номер I2C

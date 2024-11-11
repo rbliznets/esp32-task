@@ -2,7 +2,7 @@
     \file
     \brief Класс инициализации i2c в режиме мастер.
     \authors Близнец Р.А. (r.bliznets@gmail.com)
-    \version 0.1.0.0
+    \version 1.0.0.0
     \date 11.11.2024
 */
 
@@ -91,6 +91,27 @@ bool I2CMaster::take(int16_t i2c_num)
         m_i2c[i2c_num].count++;
         unlock();
         return true;
+    }
+}
+
+bool I2CMaster::probe(int16_t i2c_num, uint16_t address)
+{
+    assert(i2c_num >= 0 && i2c_num < I2C_NUM_MAX);
+
+    if ((m_i2c[i2c_num].i2c_sda < 0) || (m_i2c[i2c_num].i2c_scl < 0))
+        return false;
+
+    lock();
+    if (m_i2c[i2c_num].count != 0)
+    {
+        esp_err_t err = i2c_master_probe(m_i2c[i2c_num].bus_handle, address, -1);
+        unlock();
+        return err == ESP_OK;
+    }
+    else
+    {
+        unlock();
+        return false;
     }
 }
 
