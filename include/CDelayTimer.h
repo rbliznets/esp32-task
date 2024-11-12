@@ -41,7 +41,7 @@ protected:
 	ETimerEvent mEventType;		///< Метод сообщения.
 
 	/// Функция, вызываемая по событию в таймере.
-	inline void timer();
+	void timer();
 
 public:
 	/// Конструктор.

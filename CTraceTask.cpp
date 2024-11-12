@@ -505,7 +505,7 @@ void CTraceTask::trace(const char *strError, int32_t errCode, esp_log_level_t le
 	}
 }
 
-void CTraceTask::traceFromISR(const char *strError, int16_t errCode, BaseType_t *pxHigherPriorityTaskWoken)
+void IRAM_ATTR CTraceTask::traceFromISR(const char *strError, int16_t errCode, BaseType_t *pxHigherPriorityTaskWoken)
 {
 	STaskMessage msg;
 	msg.msgID= MSG_TRACE_ISR_STRING;

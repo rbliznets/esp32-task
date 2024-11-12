@@ -48,7 +48,7 @@ CDelayTimer::~CDelayTimer()
 	gptimer_del_timer(mTimerHandle);
 }
 
-IRAM_ATTR bool CDelayTimer::timer_on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
+bool IRAM_ATTR CDelayTimer::timer_on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
 {
 	CDelayTimer *tm = (CDelayTimer *)user_ctx;
 	tm->timer();
@@ -160,7 +160,7 @@ int CDelayTimer::wait(uint32_t period, uint8_t xNotifyBit)
 	return 0;
 }
 
-IRAM_ATTR void CDelayTimer::timer()
+void IRAM_ATTR CDelayTimer::timer()
 {
 	BaseType_t do_yield = pdFALSE;
 	if (mEventType == ETimerEvent::Notify)
@@ -174,5 +174,5 @@ IRAM_ATTR void CDelayTimer::timer()
 		else
 			mTask->sendMessageFrontFromISR(&msg, &do_yield);
 	}
-	// portYIELD_FROM_ISR(do_yield);
+	portYIELD_FROM_ISR(do_yield);
 }

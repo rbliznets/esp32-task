@@ -198,7 +198,7 @@ public:
 	  \param[in] strError Сообщение об ошибке.
 	  \param[in] errCode Код ошибки.
 	*/
-	virtual void IRAM_ATTR traceFromISR(const char *strError, int16_t errCode, BaseType_t *pxHigherPriorityTaskWoken) override;
+	virtual void traceFromISR(const char *strError, int16_t errCode, BaseType_t *pxHigherPriorityTaskWoken) override;
 
 	/// Виртуальный метод массива данных
 	/*!

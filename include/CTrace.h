@@ -232,7 +232,7 @@ public:
 	  \param[in] errCode Код ошибки.
 	  \param[in|out] pxHigherPriorityTaskWoken Флаг переключения задач.
 	*/
-	virtual void IRAM_ATTR traceFromISR(const char *strError, int16_t errCode, BaseType_t *pxHigherPriorityTaskWoken) override;
+	virtual void traceFromISR(const char *strError, int16_t errCode, BaseType_t *pxHigherPriorityTaskWoken) override;
 
 	/// Виртуальный метод массива данных
 	/*!

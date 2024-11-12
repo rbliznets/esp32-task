@@ -73,7 +73,7 @@ public:
 	  \param[out] pxHigherPriorityTaskWoken Флаг переключения задач.
 	  \return true в случае успеха.
 	*/
-	bool IRAM_ATTR sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken);
+	bool sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken);
 	/// Послать сообщение в задачу.
 	/*!
 	  \param[in] msg Указатель на сообщение.
@@ -89,7 +89,7 @@ public:
 	  \param[out] pxHigherPriorityTaskWoken Флаг переключения задач.
 	  \return true в случае успеха.
 	*/
-	bool IRAM_ATTR sendMessageFrontFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken);
+	bool sendMessageFrontFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken);
 	/// Послать сообщение в задачу в начало очереди.
 	/*!
 	  \param[in] msg Указатель на сообщение.
