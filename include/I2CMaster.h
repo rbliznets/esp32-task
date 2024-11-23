@@ -6,11 +6,12 @@
     \date 11.11.2024
 */
 
+#pragma once
 #include "driver/i2c_master.h"
 #include "CLock.h"
 
 /// @brief состояние I2C
-struct SI2CMater
+struct SI2CMaster
 {
     int16_t i2c_sda = -1;               ///< GPIO для I2C SDA
     int16_t i2c_scl = -1;               ///< GPIO для I2C SCL
@@ -25,7 +26,7 @@ private:
     static I2CMaster *theSingleInstance; ///< Единственный экземпляр
 
 protected:
-    SI2CMater m_i2c[I2C_NUM_MAX]; ///< Структура для хранения параметров
+    SI2CMaster m_i2c[I2C_NUM_MAX]; ///< Структура для хранения параметров
 
     /// @brief Конструктор
     I2CMaster();
