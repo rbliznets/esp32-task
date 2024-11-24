@@ -80,14 +80,23 @@ bool ADCMaster::take(adc_unit_t adc_num, adc_channel_t channel)
 
 bool ADCMaster::read(adc_unit_t adc_num, adc_channel_t channel, int &value)
 {
-    esp_err_t err = adc_oneshot_read(m_adc[adc_num].adc_handle, channel, &value);
-    if (err != ESP_OK)
+    esp_err_t err = ESP_ERR_TIMEOUT;
+    while (err != ESP_OK)
     {
-        ESP_LOGE(TAG, "adc_oneshot_read faeled %d", err);
-        return false;
+        err = adc_oneshot_read(m_adc[adc_num].adc_handle, channel, &value);
+
+        if (err == ESP_ERR_TIMEOUT)
+        {
+            ESP_LOGW(TAG, "adc_oneshot_read timeout");
+            continue;
+        }
+        else if (err != ESP_OK)
+        {
+            ESP_LOGE(TAG, "adc_oneshot_read failed %d", err);
+            return false;
+        }
     }
-    else
-        return true;
+    return true;
 }
 
 void ADCMaster::release(adc_unit_t adc_num)
