@@ -11,6 +11,7 @@
 #include <cstring>
 #include "sdkconfig.h"
 #include "CTrace.h"
+#include "esp_heap_caps.h"
 
 void CBaseTask::vTask(void *pvParameters)
 {
@@ -139,13 +140,20 @@ bool CBaseTask::getMessage(STaskMessage *msg, TickType_t xTicksToWait)
 	return (xQueueReceive(mTaskQueue, msg, xTicksToWait) == pdTRUE);
 }
 
-uint8_t *CBaseTask::allocNewMsg(STaskMessage *msg, uint16_t cmd, uint16_t size)
+uint8_t *CBaseTask::allocNewMsg(STaskMessage *msg, uint16_t cmd, uint16_t size, bool psram)
 {
 	assert(msg != nullptr);
 	assert(size > 0);
 
 	msg->msgID = cmd;
 	msg->shortParam = size;
+#ifdef CONFIG_SPIRAM
+	if (psram)
+		msg->msgBody = heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+	else
+		msg->msgBody = heap_caps_malloc(size, MALLOC_CAP_DEFAULT);
+#else
 	msg->msgBody = pvPortMalloc(msg->shortParam);
+#endif // CONFIG_SPIRAM
 	return (uint8_t *)msg->msgBody;
 }

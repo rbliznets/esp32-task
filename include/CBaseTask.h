@@ -1,7 +1,7 @@
 /*!
 	\file
 	\brief Базовый класс для реализации задачи FreeRTOS в многоядерном CPU.
-    \authors Близнец Р.А. (r.bliznets@gmail.com)
+	\authors Близнец Р.А. (r.bliznets@gmail.com)
 	\version 1.3.0.0
 	\date 28.04.2020
 */
@@ -35,7 +35,7 @@ class CBaseTask
 protected:
 	TaskHandle_t mTaskHandle = nullptr; ///< Хэндлер задачи FreeRTOS.
 	QueueHandle_t mTaskQueue = nullptr; ///< Приемная очередь сообщений.
-	uint32_t mNotify = 0; 				///< Флаг очереди сообщений для Notify. Если 0, то не используется.
+	uint32_t mNotify = 0;				///< Флаг очереди сообщений для Notify. Если 0, то не используется.
 
 	/// Функция задачи FreeRTOS.
 	/*!
@@ -121,9 +121,10 @@ public:
 	  \param[in] msg Указатель на сообщение.
 	  \param[in] cmd Номер команды.
 	  \param[in] size Размер выделяемой памяти.
+	  \param[in] psram Флаг внешней памяти.
 	  \return указатель на выделенную память.
 	*/
-	static uint8_t *allocNewMsg(STaskMessage *msg, uint16_t cmd, uint16_t size);
+	static uint8_t *allocNewMsg(STaskMessage *msg, uint16_t cmd, uint16_t size, bool psram = false);
 
 	/// Признак запущенной задачи.
 	/*!
@@ -135,5 +136,5 @@ public:
 	/*!
 	  \return хэндлер задачи.
 	*/
-	inline TaskHandle_t getTask() {return mTaskHandle;};
+	inline TaskHandle_t getTask() { return mTaskHandle; };
 };
