@@ -174,5 +174,5 @@ void IRAM_ATTR CDelayTimer::timer()
 		else
 			mTask->sendMessageFrontFromISR(&msg, &do_yield);
 	}
-	portYIELD_FROM_ISR(do_yield);
+	// portYIELD_FROM_ISR(do_yield);
 }
