@@ -1,7 +1,7 @@
 /*!
 	\file
 	\brief Аппаратный таймер под задачи FreeRTOS.
-    \authors Близнец Р.А. (r.bliznets@gmail.com)
+	\authors Близнец Р.А. (r.bliznets@gmail.com)
 	\version 1.3.0.0
 	\date 31.03.2023
 */
@@ -12,7 +12,6 @@
 #include "CBaseTask.h"
 #include "CSoftwareTimer.h"
 
-
 /// Микросекундный таймер под задачи FreeRTOS.
 class CDelayTimer
 {
@@ -21,7 +20,7 @@ protected:
 	gptimer_alarm_config_t m_alarm_config = {
 		.alarm_count = 1000000, // period = 1s @resolution 1MHz
 		.reload_count = 0,		// counter will reload with 0 on alarm event
-		.flags = 0};
+		.flags = {0}};
 
 	bool mRun = false; ///< Флаг включенного таймера.
 	/// Timer alarm callback
@@ -36,7 +35,7 @@ protected:
 	TaskHandle_t mTaskToNotify; ///< Указатель на задачу, ожидающую события от таймера.
 	uint8_t mNotifyBit;			///< Номер бита для оповещения задачи о событии таймера (не более 31).
 	bool mAutoRefresh;			///< Флаг автозагрузки таймера.
-	uint16_t mTimerCmd;					  ///< Номер команды для оповещения задачи о событии таймера (не более 31).
+	uint16_t mTimerCmd;			///< Номер команды для оповещения задачи о событии таймера (не более 31).
 	CBaseTask *mTask = nullptr; ///< Указатель на задачу, ожидающую события от таймера.
 	ETimerEvent mEventType;		///< Метод сообщения.
 
@@ -50,7 +49,7 @@ public:
 	  \param[in] xNotifyBit Номер бита для оповещения задачи о событии таймера.
 	  \param[in] timerCmd Номер команды для оповещения задачи о событии таймера.
 	*/
-	CDelayTimer(uint8_t xNotifyBit=0, uint16_t timerCmd = 10000);
+	CDelayTimer(uint8_t xNotifyBit = 0, uint16_t timerCmd = 10000);
 	/// Деструктор.
 	~CDelayTimer();
 

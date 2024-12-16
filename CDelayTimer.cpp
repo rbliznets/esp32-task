@@ -1,7 +1,7 @@
 /*!
 	\file
 	\brief Аппаратный таймер под задачи FreeRTOS.
-    \authors Близнец Р.А. (r.bliznets@gmail.com)
+	\authors Близнец Р.А. (r.bliznets@gmail.com)
 	\version 1.3.0.0
 	\date 31.03.2023
 */
@@ -10,7 +10,7 @@
 #include <cstdio>
 #include "CTrace.h"
 
-CDelayTimer::CDelayTimer(uint8_t xNotifyBit, uint16_t timerCmd):mNotifyBit(xNotifyBit), mTimerCmd(timerCmd)
+CDelayTimer::CDelayTimer(uint8_t xNotifyBit, uint16_t timerCmd) : mNotifyBit(xNotifyBit), mTimerCmd(timerCmd)
 {
 	assert(xNotifyBit < 32);
 
@@ -19,7 +19,7 @@ CDelayTimer::CDelayTimer(uint8_t xNotifyBit, uint16_t timerCmd):mNotifyBit(xNoti
 		.direction = GPTIMER_COUNT_UP,
 		.resolution_hz = 1000000, // 1MHz, 1 tick = 1us
 		.intr_priority = 0,
-		.flags = {0,0}};
+		.flags = {0, 0}};
 	gptimer_event_callbacks_t cbs = {
 		.on_alarm = timer_on_alarm_cb // register user callback
 	};
@@ -132,7 +132,6 @@ int CDelayTimer::start(CBaseTask *task, ETimerEvent event, uint32_t period, bool
 	return 0;
 }
 
-
 int CDelayTimer::stop()
 {
 	if (mRun)
@@ -148,10 +147,10 @@ int CDelayTimer::stop()
 
 int CDelayTimer::wait(uint32_t period, uint8_t xNotifyBit)
 {
-	if(start(xNotifyBit, period, false) != 0)
+	if (start(xNotifyBit, period, false) != 0)
 		return -1;
 	uint32_t flag = 0;
-	if(xTaskNotifyWait(0, (1 << xNotifyBit), &flag, pdMS_TO_TICKS((period/1000)+10)) != pdTRUE)
+	if (xTaskNotifyWait(0, (1 << xNotifyBit), &flag, pdMS_TO_TICKS((period / 1000) + 10)) != pdTRUE)
 	{
 		stop();
 		return -2;
@@ -169,7 +168,7 @@ void IRAM_ATTR CDelayTimer::timer()
 	{
 		STaskMessage msg;
 		msg.msgID = mTimerCmd;
-	 	if (mEventType == ETimerEvent::SendBack)
+		if (mEventType == ETimerEvent::SendBack)
 			mTask->sendMessageFromISR(&msg, &do_yield);
 		else
 			mTask->sendMessageFrontFromISR(&msg, &do_yield);
