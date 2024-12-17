@@ -14,15 +14,6 @@ CDelayTimer::CDelayTimer(uint8_t xNotifyBit, uint16_t timerCmd) : mNotifyBit(xNo
 {
 	assert(xNotifyBit < 32);
 
-	gptimer_config_t mTimer_config = {
-		.clk_src = GPTIMER_CLK_SRC_DEFAULT,
-		.direction = GPTIMER_COUNT_UP,
-		.resolution_hz = 1000000, // 1MHz, 1 tick = 1us
-		.intr_priority = 0,
-		.flags = {0, 0}};
-	gptimer_event_callbacks_t cbs = {
-		.on_alarm = timer_on_alarm_cb // register user callback
-	};
 	esp_err_t er;
 	if ((er = gptimer_new_timer(&mTimer_config, &mTimerHandle)) != ESP_OK)
 	{
