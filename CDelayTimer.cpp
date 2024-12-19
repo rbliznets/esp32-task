@@ -13,6 +13,16 @@
 CDelayTimer::CDelayTimer(uint8_t xNotifyBit, uint16_t timerCmd) : mNotifyBit(xNotifyBit), mTimerCmd(timerCmd)
 {
 	assert(xNotifyBit < 32);
+	
+	gptimer_config_t mTimer_config = {
+		.clk_src = GPTIMER_CLK_SRC_DEFAULT,
+		.direction = GPTIMER_COUNT_UP,
+		.resolution_hz = 1000000, // 1MHz, 1 tick = 1us
+		.intr_priority = 0,
+		.flags = {1, 0}};
+	gptimer_event_callbacks_t cbs = {
+		.on_alarm = timer_on_alarm_cb // register user callback
+	};
 
 	esp_err_t er;
 	if ((er = gptimer_new_timer(&mTimer_config, &mTimerHandle)) != ESP_OK)
@@ -32,11 +42,15 @@ CDelayTimer::CDelayTimer(uint8_t xNotifyBit, uint16_t timerCmd) : mNotifyBit(xNo
 CDelayTimer::~CDelayTimer()
 {
 	stop();
-	gptimer_event_callbacks_t cbs = {
-		.on_alarm = nullptr // register user callback
-	};
-	gptimer_register_event_callbacks(mTimerHandle, &cbs, nullptr);
-	gptimer_del_timer(mTimerHandle);
+	// gptimer_event_callbacks_t cbs = {
+	// 	.on_alarm = nullptr // register user callback
+	// };
+	// gptimer_register_event_callbacks(mTimerHandle, &cbs, nullptr);
+	esp_err_t er = gptimer_del_timer(mTimerHandle);
+	if(er != ESP_OK)
+	{
+		TRACE_ERROR("CDelayTimer:gptimer_del_timer failed", er);
+	}
 }
 
 bool IRAM_ATTR CDelayTimer::timer_on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)

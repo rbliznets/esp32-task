@@ -21,15 +21,6 @@ protected:
 		.alarm_count = 1000000, // period = 1s @resolution 1MHz
 		.reload_count = 0,		// counter will reload with 0 on alarm event
 		.flags = {0}};
-	gptimer_config_t mTimer_config = {
-		.clk_src = GPTIMER_CLK_SRC_DEFAULT,
-		.direction = GPTIMER_COUNT_UP,
-		.resolution_hz = 1000000, // 1MHz, 1 tick = 1us
-		.intr_priority = 0,
-		.flags = {1, 0}};
-	gptimer_event_callbacks_t cbs = {
-		.on_alarm = timer_on_alarm_cb // register user callback
-	};
 
 	bool mRun = false; ///< Флаг включенного таймера.
 	/// Timer alarm callback
