@@ -42,10 +42,6 @@ CDelayTimer::CDelayTimer(uint8_t xNotifyBit, uint16_t timerCmd) : mNotifyBit(xNo
 CDelayTimer::~CDelayTimer()
 {
 	stop();
-	// gptimer_event_callbacks_t cbs = {
-	// 	.on_alarm = nullptr // register user callback
-	// };
-	// gptimer_register_event_callbacks(mTimerHandle, &cbs, nullptr);
 	esp_err_t er = gptimer_del_timer(mTimerHandle);
 	if(er != ESP_OK)
 	{
