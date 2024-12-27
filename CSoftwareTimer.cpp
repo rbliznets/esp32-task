@@ -1,7 +1,7 @@
 /*!
 	\file
 	\brief Программный таймер под задачи FreeRTOS.
-    \authors Близнец Р.А. (r.bliznets@gmail.com)
+	\authors Близнец Р.А. (r.bliznets@gmail.com)
 	\version 1.2.0.0
 	\date 28.04.2020
 	\copyright (c) Copyright 2021, ООО "Глобал Ориент", Москва, Россия, http://www.glorient.ru/
@@ -14,6 +14,9 @@
 CSoftwareTimer::CSoftwareTimer(uint8_t xNotifyBit, uint16_t timerCmd)
 {
 	assert(xNotifyBit < 32);
+#if CONFIG_PM_ENABLE
+	esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "st", &mPMLock);
+#endif
 
 	mNotifyBit = xNotifyBit;
 	mTimerCmd = timerCmd;
@@ -29,6 +32,9 @@ CSoftwareTimer::~CSoftwareTimer()
 		stop();
 		xTimerDelete(mTimerHandle, 1);
 	}
+#if CONFIG_PM_ENABLE
+	esp_pm_lock_delete(mPMLock);
+#endif
 }
 
 void CSoftwareTimer::vTimerCallback(TimerHandle_t xTimer)
@@ -52,6 +58,9 @@ int CSoftwareTimer::start(uint32_t period, bool autoRefresh)
 	}
 	if (xTimerStart(mTimerHandle, 0) == pdTRUE)
 	{
+#if CONFIG_PM_ENABLE
+		esp_pm_lock_acquire(mPMLock);
+#endif
 		return 0;
 	}
 	else
@@ -95,6 +104,9 @@ int CSoftwareTimer::stop()
 	{
 		if (xTimerStop(mTimerHandle, 0) == pdTRUE)
 		{
+#if CONFIG_PM_ENABLE
+			esp_pm_lock_release(mPMLock);
+#endif
 			return 0;
 		}
 		else

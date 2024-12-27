@@ -10,6 +10,7 @@
 
 #include "CBaseTask.h"
 #include "freertos/timers.h"
+#include "esp_pm.h"
 
 /// Метод сообщения от таймера.
 enum class ETimerEvent
@@ -23,6 +24,9 @@ enum class ETimerEvent
 class CSoftwareTimer
 {
 protected:
+#if CONFIG_PM_ENABLE
+	esp_pm_lock_handle_t mPMLock; ///< флаг запрета на sleep
+#endif
 	TimerHandle_t mTimerHandle = nullptr; ///< Хэндлер таймера FreeRTOS.
 	uint8_t mNotifyBit;					  ///< Номер бита для оповещения задачи о событии таймера (не более 31).
 	uint16_t mTimerCmd;					  ///< Номер команды для оповещения задачи о событии таймера (не более 31).
