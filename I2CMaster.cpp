@@ -79,7 +79,7 @@ bool I2CMaster::take(int16_t i2c_num)
                 .glitch_ignore_cnt = 7,
                 .intr_priority = 0,
                 .trans_queue_depth = 0,
-                .flags = {1, 1}};
+                .flags = {1, 0}};
             esp_err_t err = i2c_new_master_bus(&i2c_mst_config, &m_i2c[i2c_num].bus_handle);
             if (err != ESP_OK)
             {
