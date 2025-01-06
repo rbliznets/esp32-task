@@ -13,13 +13,13 @@
 CDelayTimer::CDelayTimer(uint8_t xNotifyBit, uint16_t timerCmd) : mNotifyBit(xNotifyBit), mTimerCmd(timerCmd)
 {
 	assert(xNotifyBit < 32);
-	
+
 	gptimer_config_t mTimer_config = {
 		.clk_src = GPTIMER_CLK_SRC_DEFAULT,
 		.direction = GPTIMER_COUNT_UP,
 		.resolution_hz = 1000000, // 1MHz, 1 tick = 1us
 		.intr_priority = 0,
-		.flags = {1, 0}};
+		.flags = {1, 0, 0}};
 	gptimer_event_callbacks_t cbs = {
 		.on_alarm = timer_on_alarm_cb // register user callback
 	};
@@ -43,7 +43,7 @@ CDelayTimer::~CDelayTimer()
 {
 	stop();
 	esp_err_t er = gptimer_del_timer(mTimerHandle);
-	if(er != ESP_OK)
+	if (er != ESP_OK)
 	{
 		TRACE_ERROR("CDelayTimer:gptimer_del_timer failed", er);
 	}
