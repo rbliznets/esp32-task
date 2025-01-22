@@ -127,5 +127,5 @@ void CSoftwareTimer::timer()
 	if (mEventType == ETimerEvent::Notify)
 		xTaskNotify(mTaskToNotify, (1 << mNotifyBit), eSetBits);
 	else if (mEventType == ETimerEvent::SendBack)
-		mTask->sendCmd(mTimerCmd);
+		mTask->sendCmd(mTimerCmd, 0, 0, 1);
 }
