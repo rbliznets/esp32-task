@@ -109,7 +109,7 @@ bool IRAM_ATTR CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHi
 	}
 	else
 	{
-		TRACE_FROM_ISR(pcTaskGetName(mTaskHandle), msg->msgID, pxHigherPriorityTaskWoken);
+		TRACE_FROM_ISR("sendMessageFromISR", msg->msgID, pxHigherPriorityTaskWoken);
 		return false;
 	}
 }
@@ -129,6 +129,7 @@ bool IRAM_ATTR CBaseTask::sendMessageFrontFromISR(STaskMessage *msg, BaseType_t 
 	}
 	else
 	{
+		TRACE_FROM_ISR("sendMessageFromISR", msg->msgID, pxHigherPriorityTaskWoken);
 		return false;
 	}
 }
