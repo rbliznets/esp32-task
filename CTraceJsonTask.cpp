@@ -77,17 +77,6 @@ void CTraceJsonTask::printData8h(char *data)
 	printHeader(*res);
 	mAnswer += ",\"value\":\"";
 	mAnswer += strError;
-	// mJsonAmswer += "\",\"size\":";
-	// mJsonAmswer += std::to_string(*size);
-	// mJsonAmswer += ",\"data\":\"";
-	// std::sprintf(m_header,"0x%02x", pdata[0]);
-	// mJsonAmswer += m_header;
-	// for (int16_t i = 1; i < *size; i++)
-	// {
-	// 	std::sprintf(m_header,",0x%02x", pdata[i]);
-	// 	mJsonAmswer += m_header;
-	// }
-	// mJsonAmswer += "\"}}";
 	mAnswer += "\",\"data\":\"";
 	for (int16_t i = 0; i < *size; i++)
 	{
