@@ -51,7 +51,7 @@ int CSoftwareTimer::start(uint32_t period, bool autoRefresh)
 	mEventType = ETimerEvent::Notify;
 	mTaskToNotify = xTaskGetCurrentTaskHandle();
 	vTimerSetReloadMode(mTimerHandle, autoRefresh);
-	if (xTimerChangePeriod(mTimerHandle, pdMS_TO_TICKS(period), 0) != pdTRUE)
+	if (xTimerChangePeriod(mTimerHandle, pdMS_TO_TICKS(period), 1) != pdTRUE)
 	{
 		TRACE_ERROR("CSoftwareTimer:xTimerChangePeriod failed", (uint16_t)period);
 		return -2;
@@ -80,7 +80,7 @@ int CSoftwareTimer::start(CBaseTask *task, ETimerEvent event, uint32_t period, b
 	mTask = task;
 	mTaskToNotify = mTask->getTask();
 	vTimerSetReloadMode(mTimerHandle, autoRefresh);
-	if (xTimerChangePeriod(mTimerHandle, pdMS_TO_TICKS(period), 0) != pdTRUE)
+	if (xTimerChangePeriod(mTimerHandle, pdMS_TO_TICKS(period), 1) != pdTRUE)
 	{
 		TRACE_ERROR("CSoftwareTimer:xTimerChangePeriod failed", (uint16_t)period);
 		return -2;
@@ -102,7 +102,7 @@ int CSoftwareTimer::stop()
 {
 	if (isRun())
 	{
-		if (xTimerStop(mTimerHandle, 0) == pdTRUE)
+		if (xTimerStop(mTimerHandle, 1) == pdTRUE)
 		{
 #if CONFIG_PM_ENABLE
 			esp_pm_lock_release(mPMLock);
