@@ -18,9 +18,9 @@ CSoftwareTimer::CSoftwareTimer(uint8_t xNotifyBit, uint16_t timerCmd)
 	assert(xNotifyBit < 32);
 	
 	// Если включена поддержка управления питанием, создаем блокировку для предотвращения перехода в режим неглубокого сна
-#if CONFIG_PM_ENABLE
-	esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "st", &mPMLock);
-#endif
+// #if CONFIG_PM_ENABLE
+// 	esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "st", &mPMLock);
+// #endif
 
 	// Инициализация полей класса
 	mNotifyBit = xNotifyBit;
@@ -45,9 +45,9 @@ CSoftwareTimer::~CSoftwareTimer()
 	}
 	
 	// Удаление блокировки управления питанием, если она была создана
-#if CONFIG_PM_ENABLE
-	esp_pm_lock_delete(mPMLock);
-#endif
+// #if CONFIG_PM_ENABLE
+// 	esp_pm_lock_delete(mPMLock);
+// #endif
 }
 
 // Функция обратного вызова таймера (выполняется при срабатывании таймера)
@@ -86,10 +86,10 @@ int CSoftwareTimer::start(uint32_t period, bool autoRefresh)
 	// Запуск таймера
 	if (xTimerStart(mTimerHandle, 0) == pdTRUE)
 	{
-#if CONFIG_PM_ENABLE
-		// Получение блокировки управления питанием для предотвращения перехода в режим неглубокого сна
-		esp_pm_lock_acquire(mPMLock);
-#endif
+// #if CONFIG_PM_ENABLE
+// 		// Получение блокировки управления питанием для предотвращения перехода в режим неглубокого сна
+// 		esp_pm_lock_acquire(mPMLock);
+// #endif
 		return 0;
 	}
 	else
@@ -145,10 +145,10 @@ int CSoftwareTimer::stop()
 		// Остановка таймера
 		if (xTimerStop(mTimerHandle, 1) == pdTRUE)
 		{
-#if CONFIG_PM_ENABLE
-			// Освобождение блокировки управления питанием
-			esp_pm_lock_release(mPMLock);
-#endif
+// #if CONFIG_PM_ENABLE
+// 			// Освобождение блокировки управления питанием
+// 			esp_pm_lock_release(mPMLock);
+// #endif
 			return 0;
 		}
 		else
