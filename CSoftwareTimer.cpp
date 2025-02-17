@@ -84,7 +84,7 @@ int CSoftwareTimer::start(uint32_t period, bool autoRefresh)
 	}
 
 	// Запуск таймера
-	if (xTimerStart(mTimerHandle, 0) == pdTRUE)
+	if (xTimerStart(mTimerHandle, 1) == pdTRUE)
 	{
 // #if CONFIG_PM_ENABLE
 // 		// Получение блокировки управления питанием для предотвращения перехода в режим неглубокого сна
@@ -126,7 +126,7 @@ int CSoftwareTimer::start(CBaseTask *task, ETimerEvent event, uint32_t period, b
 	}
 
 	// Запуск таймера
-	if (xTimerStart(mTimerHandle, 0) == pdTRUE)
+	if (xTimerStart(mTimerHandle, 1) == pdTRUE)
 	{
 		return 0;
 	}
