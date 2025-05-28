@@ -310,7 +310,7 @@ void CTraceTask::printData16_2(char *data)
 {
 	uint64_t *res = (uint64_t *)data;
 	uint32_t *size = (uint32_t *)&data[8];
-	uint16_t *pdata = (uint16_t *)(data[8 + 2] + data[8 + 4 + 1] * 256 + data[8 + 4 + 2] * 256 * 256 + data[8 + 4 + 3] * 256 * 256 * 256);
+	int16_t *pdata = (int16_t *)(data[8 + 4] + data[8 + 4 + 1] * 256 + data[8 + 4 + 2] * 256 * 256 + data[8 + 4 + 3] * 256 * 256 * 256);
 	char *strError = &data[8 + 4 + 4];
 
 	printHeader(*res);
