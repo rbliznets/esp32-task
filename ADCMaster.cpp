@@ -84,7 +84,7 @@ bool ADCMaster::take(adc_unit_t adc_num, adc_channel_t channel)
         if (err != ESP_OK)
         {
             unlock();
-            ESP_LOGE(TAG, "Ошибка инициализации ADC%d", adc_num);
+            ESP_LOGE(TAG, "adc_oneshot_new_unit failed(%d) ADC%d", err, adc_num);
             return false;
         }
     }
@@ -92,12 +92,12 @@ bool ADCMaster::take(adc_unit_t adc_num, adc_channel_t channel)
     // Настройка канала ADC
     adc_oneshot_chan_cfg_t config;
     config.bitwidth = ADC_BITWIDTH_DEFAULT; // 12 бит
-    config.atten = ADC_ATTEN_DB_12;         
+    config.atten = ADC_ATTEN_DB_12;
     err = adc_oneshot_config_channel(m_adc[adc_num].adc_handle, channel, &config);
     if (err != ESP_OK)
     {
         unlock();
-        ESP_LOGE(TAG, "Ошибка добавления канала %d в ADC%d", (uint16_t)channel, adc_num);
+        ESP_LOGE(TAG, "adc_oneshot_config_channel failed(%d) channel %d в ADC%d", err, (uint16_t)channel, adc_num);
         return false;
     }
 
@@ -123,12 +123,12 @@ bool ADCMaster::read(adc_unit_t adc_num, adc_channel_t channel, int &value)
 
         if (err == ESP_ERR_TIMEOUT)
         {
-            ESP_LOGW(TAG, "Тайм-аут чтения ADC. Повторная попытка...");
+            ESP_LOGW(TAG, "adc_oneshot_read ESP_ERR_TIMEOUT");
             continue;
         }
         else if (err != ESP_OK)
         {
-            ESP_LOGE(TAG, "Ошибка чтения ADC: %d", err);
+            ESP_LOGE(TAG, "adc_oneshot_read ADC%d: %d", adc_num, err);
             return false;
         }
     }
@@ -152,7 +152,7 @@ void ADCMaster::release(adc_unit_t adc_num)
             esp_err_t err = adc_oneshot_del_unit(m_adc[adc_num].adc_handle);
             if (err != ESP_OK)
             {
-                ESP_LOGE(TAG, "Ошибка удаления модуля ADC%d", adc_num);
+                ESP_LOGE(TAG, "adc_oneshot_del_unit failed(%d) ADC%d", err, adc_num);
             }
         }
     }
