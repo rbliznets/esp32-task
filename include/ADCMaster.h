@@ -44,6 +44,8 @@ public:
     /// @return true - успешно, false - ошибка
     bool take(adc_unit_t adc_num, adc_channel_t channel);
 
+    adc_oneshot_unit_handle_t* take(adc_unit_t adc_num);
+
     /// @brief считать значение ADC
     /// @param adc_num Номер ADC
     /// @param channel Канал ADC

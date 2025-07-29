@@ -106,6 +106,33 @@ bool ADCMaster::take(adc_unit_t adc_num, adc_channel_t channel)
     return true;
 }
 
+adc_oneshot_unit_handle_t* ADCMaster::take(adc_unit_t adc_num)
+{
+    esp_err_t err;
+
+    lock(); // Блокировка доступа к ресурсам ADC
+
+    // Инициализация модуля ADC, если он не был инициализирован ранее
+    if (m_adc[adc_num].count == 0)
+    {
+        adc_oneshot_unit_init_cfg_t init_config;
+        init_config.unit_id = adc_num;
+        init_config.clk_src = ADC_RTC_CLK_SRC_DEFAULT; // Источник тактирования по умолчанию
+        init_config.ulp_mode = ADC_ULP_MODE_DISABLE;   // Отключение режима для ультра-низкого потребления
+        err = adc_oneshot_new_unit(&init_config, &m_adc[adc_num].adc_handle);
+        if (err != ESP_OK)
+        {
+            unlock();
+            ESP_LOGE(TAG, "adc_oneshot_new_unit failed(%d) ADC%d", err, adc_num);
+            return nullptr;
+        }
+    }
+
+    m_adc[adc_num].count++; // Увеличение счетчика использования модуля
+    unlock();
+    return &(m_adc[adc_num].adc_handle);
+}
+
 /**
  * \brief Читает значение с указанного канала ADC.
  * \param adc_num Номер модуля ADC.
