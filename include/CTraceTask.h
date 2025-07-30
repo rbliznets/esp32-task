@@ -180,7 +180,7 @@ public:
 	  \param[in] queueLength Максимальная длина очереди сообщений.
 	  \param[in] coreID Ядро CPU (0,1).
 	*/
-	virtual void init(UBaseType_t queueLength = 30, BaseType_t coreID = 1)
+	inline void init(UBaseType_t queueLength = 30, BaseType_t coreID = 1)
 	{
 		CBaseTask::init("trace", 2048+256, 1, queueLength, coreID);
 	};
