@@ -137,7 +137,16 @@ bool IRAM_ATTR CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHi
 		// Если установлен флаг уведомления, отправляем уведомление задаче из ISR.
 		if (mNotify != 0)
 		{
-			return (xTaskNotifyFromISR(mTaskHandle, mNotify, eSetBits, pxHigherPriorityTaskWoken) == pdPASS);
+			if (xTaskNotifyFromISR(mTaskHandle, mNotify, eSetBits, pxHigherPriorityTaskWoken) == pdPASS)
+			{
+				return true;
+			}
+			else
+			{
+				// Если отправка не удалась, записываем предупреждение.
+				TRACE_FROM_ISR("sendMessageFromISR2", msg->msgID, pxHigherPriorityTaskWoken);
+				return false;
+			}
 		}
 		else
 			return true; // Сообщение успешно отправлено без уведомления.
@@ -162,7 +171,16 @@ bool IRAM_ATTR CBaseTask::sendMessageFrontFromISR(STaskMessage *msg, BaseType_t 
 		// Если установлен флаг уведомления, отправляем уведомление задаче из ISR.
 		if (mNotify != 0)
 		{
-			return (xTaskNotifyFromISR(mTaskHandle, mNotify, eSetBits, pxHigherPriorityTaskWoken) == pdPASS);
+			if (xTaskNotifyFromISR(mTaskHandle, mNotify, eSetBits, pxHigherPriorityTaskWoken) == pdPASS)
+			{
+				return true;
+			}
+			else
+			{
+				// Если отправка не удалась, записываем предупреждение.
+				TRACE_FROM_ISR("sendMessageFrontFromISR2", msg->msgID, pxHigherPriorityTaskWoken);
+				return false;
+			}
 		}
 		else
 			return true; // Сообщение успешно отправлено без уведомления.
@@ -170,7 +188,7 @@ bool IRAM_ATTR CBaseTask::sendMessageFrontFromISR(STaskMessage *msg, BaseType_t 
 	else
 	{
 		// Если отправка не удалась, записываем предупреждение.
-		TRACE_FROM_ISR("sendMessageFromISR", msg->msgID, pxHigherPriorityTaskWoken);
+		TRACE_FROM_ISR("sendMessageFrontFromISR", msg->msgID, pxHigherPriorityTaskWoken);
 		return false;
 	}
 }
