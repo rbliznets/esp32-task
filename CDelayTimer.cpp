@@ -91,7 +91,7 @@ bool IRAM_ATTR CDelayTimer::timer_on_alarm_cb(gptimer_handle_t timer, const gpti
  * \return 0 в случае успеха, иначе код ошибки.
  * \details Настраивает таймер на уведомление текущей задачи по истечении периода.
  */
-int CDelayTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
+int IRAM_ATTR CDelayTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 {
 	assert(xNotifyBit < 32);		   // Проверка корректности бита уведомления
 	assert(pdMS_TO_TICKS(period) > 0); // Проверка корректности периода
@@ -147,7 +147,7 @@ int CDelayTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
  * \return 0 в случае успеха, иначе код ошибки.
  * \details Настраивает таймер на отправку сообщения задаче по истечении периода.
  */
-int CDelayTimer::start(CBaseTask *task, ETimerEvent event, uint32_t period, bool autoRefresh)
+int IRAM_ATTR CDelayTimer::start(CBaseTask *task, ETimerEvent event, uint32_t period, bool autoRefresh)
 {
 	assert(task != nullptr);		   // Проверка корректности указателя на задачу
 	assert(pdMS_TO_TICKS(period) > 0); // Проверка корректности периода
@@ -200,7 +200,7 @@ int CDelayTimer::start(CBaseTask *task, ETimerEvent event, uint32_t period, bool
  * \return 0 в случае успеха, иначе -1.
  * \details Останавливает и отключает таймер.
  */
-int CDelayTimer::stop()
+int IRAM_ATTR CDelayTimer::stop()
 {
 	if (mRun)
 	{
