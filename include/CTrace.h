@@ -11,20 +11,22 @@
 			 traceLog instance.
 */
 
-#pragma once
+#pragma once // Include guard to prevent multiple inclusions of this header file
 
-#include "sdkconfig.h"
-#include <stdint.h>
-#include "ITraceLog.h"
-#include "CLock.h"
-#include <list>
-#include "esp_log.h"
+#include "sdkconfig.h" // Include configuration header (likely for ESP-IDF)
+#include <stdint.h>	   // Include standard integer types
+#include "ITraceLog.h" // Include interface definition for trace loggers
+#include "CLock.h"	   // Include locking/synchronization mechanism
+#include <list>		   // Include standard list container for managing loggers
+#include "esp_log.h"   // Include ESP-IDF logging library
 
 #ifdef CONFIG_COMPILER_CXX_RTTI
-#include <typeinfo>
+#include <typeinfo> // Include for runtime type information (RTTI) if enabled
 #endif
 
 #ifdef CONFIG_DEBUG_CODE
+// Define macros for logging functionality when debugging is enabled
+
 /// Output log message
 /*!
   \param[in] str Message string.
@@ -37,14 +39,18 @@
 */
 #define PRINT(str) traceLog.stopTime(str.c_str(), 1)
 
-/// Main trace method
+/// Main trace method for informational messages
 /*!
 	\param[in] str Error message string.
 	\param[in] code Error code.
 	\param[in] reboot Reboot flag.
 */
 #define TRACE(str, code, reboot) traceLog.trace((char *)str, code, ESP_LOG_INFO, reboot)
+
+/// Main trace method for warnings
 #define TRACE_W(str, code, reboot) traceLog.trace((char *)str, code, ESP_LOG_WARN, reboot)
+
+/// Main trace method for errors
 #define TRACE_E(str, code, reboot) traceLog.trace((char *)str, code, ESP_LOG_ERROR, reboot)
 
 /// Print value in decimal
@@ -116,7 +122,7 @@
 #define INIT_TRACE() traceLog.init();
 
 #ifdef CONFIG_COMPILER_CXX_RTTI
-/// Print error from a class method.
+/// Print error from a class method using RTTI for the logger name.
 /*!
 	\param[in] s Error message string.
 	\param[in] x Error code.
@@ -129,7 +135,7 @@
 			traceLog.trace((char *)s, x, ESP_LOG_ERROR, false); \
 	}
 
-/// Print warning from a class method.
+/// Print warning from a class method using RTTI for the logger name.
 /*!
 	\param[in] s Error message string.
 	\param[in] x Error code.
@@ -142,7 +148,7 @@
 			traceLog.trace((char *)s, x, ESP_LOG_WARN, false); \
 	}
 #else
-/// Print error from a class method.
+/// Print error from a class method without RTTI, uses a generic name.
 /*!
 	\param[in] s Error message string.
 	\param[in] x Error code.
@@ -155,7 +161,7 @@
 			traceLog.trace((char *)s, x, ESP_LOG_ERROR, false); \
 	}
 
-/// Print warning from a class method.
+/// Print warning from a class method without RTTI, uses a generic name.
 /*!
 	\param[in] s Error message string.
 	\param[in] x Error code.
@@ -171,17 +177,18 @@
 
 #else // CONFIG_DEBUG_CODE is not defined
 
-// Define empty macros if debugging is disabled
+// Define empty macros if debugging is disabled to avoid overhead
 #define LOG(str)
 #define PRINT(str)
 
-#define TRACE(str, code, reboot)
-#define TRACE_W(str, code, reboot)
-#define TRACE_E(str, code, reboot)
-#define TDEC(str, code)
-#define THEX(str, code)
-#define TRACE_FROM_ISR(str, code, pxHigherPriorityTaskWoken)
-#define TRACEDATA(str, data, size)
+// Use ESP_LOG directly if global tracing is disabled
+#define TRACE(str, code, reboot) ESP_LOGI("*", "%d: %s", code, str)
+#define TRACE_W(str, code, reboot) ESP_LOGW("*", "%d: %s", code, str)
+#define TRACE_E(str, code, reboot) ESP_LOGE("*", "%d: %s", code, str)
+#define TDEC(str, code) ESP_LOGI("*", "%d: %s", code, str)
+#define THEX(str, code) ESP_LOGI("*", "0x%x: %s", code, str)
+#define TRACE_FROM_ISR(str, code, pxHigherPriorityTaskWoken)		   // No-op for ISR
+#define TRACEDATA(str, data, size) ESP_LOG_BUFFER_HEX("*", data, size) // Use ESP buffer logging
 
 #define STARTTIMESHOT()
 #define STOPTIMESHOT(str)
@@ -194,28 +201,28 @@
 #define INIT_TRACE()
 
 #ifdef CONFIG_COMPILER_CXX_RTTI
-/// Print error from a class method (when global tracing is disabled).
+/// Print error from a class method (when global tracing is disabled) using RTTI.
 /*!
 	\param[in] s Error message string.
 	\param[in] x Error code.
 */
 #define TRACE_ERROR(s, x) ESP_LOGE(typeid(*this).name(), "%s: %d", s, x)
 
-/// Print warning from a class method (when global tracing is disabled).
+/// Print warning from a class method (when global tracing is disabled) using RTTI.
 /*!
 	\param[in] s Error message string.
 	\param[in] x Error code.
 */
 #define TRACE_WARNING(s, x) ESP_LOGW(typeid(*this).name(), "%s: %d", s, x)
 #else
-/// Print error from a class method (when global tracing is disabled).
+/// Print error from a class method (when global tracing is disabled) without RTTI.
 /*!
 	\param[in] s Error message string.
 	\param[in] x Error code.
 */
 #define TRACE_ERROR(s, x) ESP_LOGE("Trace", "%s: %d", s, x)
 
-/// Print warning from a class method (when global tracing is disabled).
+/// Print warning from a class method (when global tracing is disabled) without RTTI.
 /*!
 	\param[in] s Error message string.
 	\param[in] x Error code.
@@ -268,7 +275,7 @@ public:
 	*/
 	virtual void traceFromISR(const char *strError, int16_t errCode, BaseType_t *pxHigherPriorityTaskWoken) override;
 
-	/// Virtual data array trace method
+	/// Virtual data array trace method (uint8_t)
 	/*!
 	  \param[in] strError Error message string.
 	  \param[in] data Pointer to the data array.
@@ -276,7 +283,7 @@ public:
 	*/
 	virtual void trace(const char *strError, uint8_t *data, uint32_t size) override;
 
-	/// Virtual data array trace method
+	/// Virtual data array trace method (int8_t)
 	/*!
 	  \param[in] strError Error message string.
 	  \param[in] data Pointer to the data array.
@@ -284,7 +291,7 @@ public:
 	*/
 	virtual void trace(const char *strError, int8_t *data, uint32_t size) override;
 
-	/// Virtual data array trace method
+	/// Virtual data array trace method (uint16_t)
 	/*!
 	  \param[in] strError Error message string.
 	  \param[in] data Pointer to the data array.
@@ -292,7 +299,7 @@ public:
 	*/
 	virtual void trace(const char *strError, uint16_t *data, uint32_t size) override;
 
-	/// Virtual data array trace method
+	/// Virtual data array trace method (int16_t)
 	/*!
 	  \param[in] strError Error message string.
 	  \param[in] data Pointer to the data array.
@@ -300,7 +307,7 @@ public:
 	*/
 	virtual void trace(const char *strError, int16_t *data, uint32_t size) override;
 
-	/// Virtual data array trace method
+	/// Virtual data array trace method (uint32_t)
 	/*!
 	  \param[in] strError Error message string.
 	  \param[in] data Pointer to the data array.
@@ -308,7 +315,7 @@ public:
 	*/
 	virtual void trace(const char *strError, uint32_t *data, uint32_t size) override;
 
-	/// Virtual data array trace method
+	/// Virtual data array trace method (int32_t)
 	/*!
 	  \param[in] strError Error message string.
 	  \param[in] data Pointer to the data array.
