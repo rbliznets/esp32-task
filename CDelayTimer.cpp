@@ -1,269 +1,269 @@
 /*!
 	\file
-	\brief Аппаратный таймер для задач FreeRTOS.
-	\authors Близнец Р.А. (r.bliznets@gmail.com)
+	\brief Hardware timer for FreeRTOS tasks.
+	\authors Bliznets R.A. (r.bliznets@gmail.com)
 	\version 1.3.0.0
 	\date 31.03.2023
-	\details Класс CDelayTimer реализует управление аппаратным таймером для использования в задачах FreeRTOS.
-			 Поддерживает уведомления задач и отправку сообщений по истечении заданного интервала времени.
+	\details The CDelayTimer class implements management of a hardware timer for use in FreeRTOS tasks.
+			 It supports task notifications and sending messages when a specified time interval elapses.
 */
 
-#include "CDelayTimer.h" // Заголовочный файл класса CDelayTimer
-#include <cstdio>		 // Стандартная библиотека для работы с вводом-выводом
-#include "CTrace.h"		 // Библиотека для трассировки и логирования
+#include "CDelayTimer.h" // Header file for the CDelayTimer class
+#include <cstdio>		 // Standard library for input/output operations
+#include "CTrace.h"		 // Library for tracing and logging
 
 /**
- * \brief Конструктор класса CDelayTimer.
- * \param xNotifyBit Бит уведомления (0-31), используемый для уведомления задачи.
- * \param timerCmd Команда таймера, передаваемая в сообщении.
- * \details Инициализирует таймер с настройками по умолчанию: частота 1 МГц, счет вверх.
- *          Регистрирует callback-функцию для обработки событий таймера.
+ * \brief Constructor for the CDelayTimer class.
+ * \param xNotifyBit Notification bit (0-31) used for notifying the task.
+ * \param timerCmd Timer command passed in the message.
+ * \details Initializes the timer with default settings: frequency 1 MHz, counting up.
+ *          Registers a callback function to handle timer events.
  */
 CDelayTimer::CDelayTimer(uint8_t xNotifyBit, uint16_t timerCmd) : mNotifyBit(xNotifyBit), mTimerCmd(timerCmd)
 {
-	assert(xNotifyBit < 32); // Проверка корректности бита уведомления
+	assert(xNotifyBit < 32); // Verify the notification bit is valid (0-31)
 
-	// Настройка конфигурации таймера
+	// Configure the timer settings
 	gptimer_config_t mTimer_config = {
-		.clk_src = GPTIMER_CLK_SRC_DEFAULT, // Источник тактирования по умолчанию
-		.direction = GPTIMER_COUNT_UP,		// Счет вверх
-		.resolution_hz = 1000000,			// Частота 1 МГц (1 тик = 1 мкс)
-		.intr_priority = 0,					// Приоритет прерывания
-		.flags = {1, 0, 0}					// Флаги конфигурации
+		.clk_src = GPTIMER_CLK_SRC_DEFAULT, // Default clock source
+		.direction = GPTIMER_COUNT_UP,		// Count up
+		.resolution_hz = 1000000,			// Frequency 1 MHz (1 tick = 1 microsecond)
+		.intr_priority = 0,					// Interrupt priority
+		.flags = {1, 0, 0}					// Configuration flags
 	};
 
-	// Регистрация callback-функции для обработки событий таймера
+	// Register the callback function for handling timer events
 	gptimer_event_callbacks_t cbs = {
-		.on_alarm = timer_on_alarm_cb // Указатель на функцию-обработчик
+		.on_alarm = timer_on_alarm_cb // Pointer to the callback function
 	};
 
 	esp_err_t er;
-	// Создание нового таймера
+	// Create a new timer
 	if ((er = gptimer_new_timer(&mTimer_config, &mTimerHandle)) != ESP_OK)
 	{
-		TRACE_ERROR("CDelayTimer:gptimer_new_timer failed", er); // Логирование ошибки
+		TRACE_ERROR("CDelayTimer:gptimer_new_timer failed", er); // Log error
 	}
 	else
 	{
-		// Регистрация callback-функции
+		// Register the callback function
 		if ((er = gptimer_register_event_callbacks(mTimerHandle, &cbs, this)) != ESP_OK)
 		{
-			TRACE_ERROR("CDelayTimer:gptimer_register_event_callbacks failed", er); // Логирование ошибки
-			gptimer_del_timer(mTimerHandle);										// Удаление таймера в случае ошибки
+			TRACE_ERROR("CDelayTimer:gptimer_register_event_callbacks failed", er); // Log error
+			gptimer_del_timer(mTimerHandle);										// Delete timer on error
 		}
 	}
 }
 
 /**
- * \brief Деструктор класса CDelayTimer.
- * \details Останавливает таймер и удаляет его.
+ * \brief Destructor for the CDelayTimer class.
+ * \details Stops the timer and deletes it.
  */
 CDelayTimer::~CDelayTimer()
 {
-	stop();											// Остановка таймера
-	esp_err_t er = gptimer_del_timer(mTimerHandle); // Удаление таймера
+	stop();											// Stop the timer
+	esp_err_t er = gptimer_del_timer(mTimerHandle); // Delete the timer
 	if (er != ESP_OK)
 	{
-		TRACE_ERROR("CDelayTimer:gptimer_del_timer failed", er); // Логирование ошибки
+		TRACE_ERROR("CDelayTimer:gptimer_del_timer failed", er); // Log error
 	}
 }
 
 /**
- * \brief Callback-функция, вызываемая при срабатывании таймера.
- * \param timer Дескриптор таймера.
- * \param edata Данные события таймера.
- * \param user_ctx Указатель на объект CDelayTimer.
- * \return Всегда возвращает true.
- * \details Вызывает метод timer() объекта CDelayTimer.
+ * \brief Callback function called when the timer triggers an alarm.
+ * \param timer Timer handle.
+ * \param edata Timer event data.
+ * \param user_ctx Pointer to the CDelayTimer object.
+ * \return Always returns true.
+ * \details Calls the timer() method of the CDelayTimer object.
  */
 bool IRAM_ATTR CDelayTimer::timer_on_alarm_cb(gptimer_handle_t timer, const gptimer_alarm_event_data_t *edata, void *user_ctx)
 {
-	CDelayTimer *tm = (CDelayTimer *)user_ctx; // Приведение указателя
-	tm->timer();							   // Вызов метода обработки таймера
+	CDelayTimer *tm = (CDelayTimer *)user_ctx; // Cast the pointer
+	tm->timer();							   // Call the timer handling method
 	return true;
 }
 
 /**
- * \brief Запуск таймера с уведомлением задачи.
- * \param xNotifyBit Бит уведомления (0-31).
- * \param period Период таймера в микросекундах.
- * \param autoRefresh Флаг автоматического перезапуска таймера.
- * \return 0 в случае успеха, иначе код ошибки.
- * \details Настраивает таймер на уведомление текущей задачи по истечении периода.
+ * \brief Starts the timer to notify a task.
+ * \param xNotifyBit Notification bit (0-31).
+ * \param period Timer period in microseconds.
+ * \param autoRefresh Flag for automatic timer restart.
+ * \return 0 on success, otherwise an error code.
+ * \details Configures the timer to notify the current task when the period expires.
  */
 int IRAM_ATTR CDelayTimer::start(uint8_t xNotifyBit, uint32_t period, bool autoRefresh)
 {
-	assert(xNotifyBit < 32);		   // Проверка корректности бита уведомления
-	assert(pdMS_TO_TICKS(period) > 0); // Проверка корректности периода
+	assert(xNotifyBit < 32);		   // Verify the notification bit is valid (0-31)
+	assert(pdMS_TO_TICKS(period) > 0); // Verify the period is valid
 
 	esp_err_t er;
-	stop(); // Остановка таймера перед настройкой
+	stop(); // Stop the timer before configuring
 
-	mTaskToNotify = xTaskGetCurrentTaskHandle();			 // Получение дескриптора текущей задачи
-	mNotifyBit = xNotifyBit;								 // Установка бита уведомления
-	mEventType = ETimerEvent::Notify;						 // Установка типа события
-	m_alarm_config.alarm_count = period;					 // Установка периода таймера
-	m_alarm_config.flags.auto_reload_on_alarm = autoRefresh; // Настройка автообновления
+	mTaskToNotify = xTaskGetCurrentTaskHandle();			 // Get the handle of the current task
+	mNotifyBit = xNotifyBit;								 // Set the notification bit
+	mEventType = ETimerEvent::Notify;						 // Set the event type
+	m_alarm_config.alarm_count = period;					 // Set the timer period
+	m_alarm_config.flags.auto_reload_on_alarm = autoRefresh; // Configure auto-reload
 
-	// Настройка действия таймера при срабатывании
+	// Configure the timer action on alarm
 	if ((er = gptimer_set_alarm_action(mTimerHandle, &m_alarm_config)) != ESP_OK)
 	{
-		TRACE_ERROR("CDelayTimer:gptimer_set_alarm_action failed!", er); // Логирование ошибки
+		TRACE_ERROR("CDelayTimer:gptimer_set_alarm_action failed!", er); // Log error
 		return -3;
 	}
 
-	// Включение таймера
+	// Enable the timer
 	if ((er = gptimer_enable(mTimerHandle)) != ESP_OK)
 	{
-		TRACE_ERROR("CDelayTimer:gptimer_enable failed", er); // Логирование ошибки
+		TRACE_ERROR("CDelayTimer:gptimer_enable failed", er); // Log error
 		return -4;
 	}
 
-	// Сброс счетчика таймера
+	// Reset the timer counter
 	if ((er = gptimer_set_raw_count(mTimerHandle, 0)) != ESP_OK)
 	{
-		TRACE_ERROR("CDelayTimer:gptimer_set_raw_count failed", er); // Логирование ошибки
+		TRACE_ERROR("CDelayTimer:gptimer_set_raw_count failed", er); // Log error
 		return -5;
 	}
 
-	// Запуск таймера
+	// Start the timer
 	if ((er = gptimer_start(mTimerHandle)) != ESP_OK)
 	{
-		TRACE_ERROR("CDelayTimer:gptimer_start failed!", er); // Логирование ошибки
-		gptimer_disable(mTimerHandle);						  // Отключение таймера в случае ошибки
+		TRACE_ERROR("CDelayTimer:gptimer_start failed!", er); // Log error
+		gptimer_disable(mTimerHandle);						  // Disable timer on error
 		return -6;
 	}
 
-	mRun = true; // Установка флага работы таймера
+	mRun = true; // Set the timer running flag
 	return 0;
 }
 
 /**
- * \brief Запуск таймера с отправкой сообщения задаче.
- * \param task Указатель на задачу, которой будет отправлено сообщение.
- * \param event Тип события (отправка сообщения в начало или конец очереди).
- * \param period Период таймера в микросекундах.
- * \param autoRefresh Флаг автоматического перезапуска таймера.
- * \return 0 в случае успеха, иначе код ошибки.
- * \details Настраивает таймер на отправку сообщения задаче по истечении периода.
+ * \brief Starts the timer to send a message to a task.
+ * \param task Pointer to the task to which the message will be sent.
+ * \param event Type of event (sending message to front or back of queue).
+ * \param period Timer period in microseconds.
+ * \param autoRefresh Flag for automatic timer restart.
+ * \return 0 on success, otherwise an error code.
+ * \details Configures the timer to send a message to the task when the period expires.
  */
 int IRAM_ATTR CDelayTimer::start(CBaseTask *task, ETimerEvent event, uint32_t period, bool autoRefresh)
 {
-	assert(task != nullptr);		   // Проверка корректности указателя на задачу
-	assert(pdMS_TO_TICKS(period) > 0); // Проверка корректности периода
+	assert(task != nullptr);		   // Verify the task pointer is valid
+	assert(pdMS_TO_TICKS(period) > 0); // Verify the period is valid
 
 	esp_err_t er;
-	stop(); // Остановка таймера перед настройкой
+	stop(); // Stop the timer before configuring
 
-	mEventType = event;				  // Установка типа события
-	mTask = task;					  // Установка задачи
-	mTaskToNotify = mTask->getTask(); // Получение дескриптора задачи
+	mEventType = event;				  // Set the event type
+	mTask = task;					  // Set the target task
+	mTaskToNotify = mTask->getTask(); // Get the task handle
 
-	m_alarm_config.alarm_count = period;					 // Установка периода таймера
-	m_alarm_config.flags.auto_reload_on_alarm = autoRefresh; // Настройка автообновления
+	m_alarm_config.alarm_count = period;					 // Set the timer period
+	m_alarm_config.flags.auto_reload_on_alarm = autoRefresh; // Configure auto-reload
 
-	// Настройка действия таймера при срабатывании
+	// Configure the timer action on alarm
 	if ((er = gptimer_set_alarm_action(mTimerHandle, &m_alarm_config)) != ESP_OK)
 	{
-		TRACE_ERROR("CDelayTimer:gptimer_set_alarm_action failed!", er); // Логирование ошибки
+		TRACE_ERROR("CDelayTimer:gptimer_set_alarm_action failed!", er); // Log error
 		return -3;
 	}
 
-	// Включение таймера
+	// Enable the timer
 	if ((er = gptimer_enable(mTimerHandle)) != ESP_OK)
 	{
-		TRACE_ERROR("CDelayTimer:gptimer_enable failed", er); // Логирование ошибки
+		TRACE_ERROR("CDelayTimer:gptimer_enable failed", er); // Log error
 		return -4;
 	}
 
-	// Сброс счетчика таймера
+	// Reset the timer counter
 	if ((er = gptimer_set_raw_count(mTimerHandle, 0)) != ESP_OK)
 	{
-		TRACE_ERROR("CDelayTimer:gptimer_set_raw_count failed", er); // Логирование ошибки
+		TRACE_ERROR("CDelayTimer:gptimer_set_raw_count failed", er); // Log error
 		return -5;
 	}
 
-	// Запуск таймера
+	// Start the timer
 	if ((er = gptimer_start(mTimerHandle)) != ESP_OK)
 	{
-		TRACE_ERROR("CDelayTimer:gptimer_start failed!", er); // Логирование ошибки
-		gptimer_disable(mTimerHandle);						  // Отключение таймера в случае ошибки
+		TRACE_ERROR("CDelayTimer:gptimer_start failed!", er); // Log error
+		gptimer_disable(mTimerHandle);						  // Disable timer on error
 		return -6;
 	}
 
-	mRun = true; // Установка флага работы таймера
+	mRun = true; // Set the timer running flag
 	return 0;
 }
 
 /**
- * \brief Остановка таймера.
- * \return 0 в случае успеха, иначе -1.
- * \details Останавливает и отключает таймер.
+ * \brief Stops the timer.
+ * \return 0 on success, otherwise -1.
+ * \details Stops and disables the timer.
  */
 int IRAM_ATTR CDelayTimer::stop()
 {
 	if (mRun)
 	{
-		gptimer_stop(mTimerHandle);	   // Остановка таймера
-		gptimer_disable(mTimerHandle); // Отключение таймера
-		mRun = false;				   // Сброс флага работы таймера
+		gptimer_stop(mTimerHandle);	   // Stop the timer
+		gptimer_disable(mTimerHandle); // Disable the timer
+		mRun = false;				   // Clear the timer running flag
 		return 0;
 	}
 	else
 	{
-		return -1; // Таймер уже остановлен
+		return -1; // Timer is already stopped
 	}
 }
 
 /**
- * \brief Ожидание срабатывания таймера.
- * \param period Период ожидания в микросекундах.
- * \param xNotifyBit Бит уведомления (0-31).
- * \return 0 в случае успеха, иначе код ошибки.
- * \details Запускает таймер и ожидает уведомления от него.
+ * \brief Waits for the timer to trigger.
+ * \param period Wait period in microseconds.
+ * \param xNotifyBit Notification bit (0-31).
+ * \return 0 on success, otherwise an error code.
+ * \details Starts the timer and waits for its notification.
  */
 int CDelayTimer::wait(uint32_t period, uint8_t xNotifyBit)
 {
-	if (start(xNotifyBit, period, false) != 0) // Запуск таймера
+	if (start(xNotifyBit, period, false) != 0) // Start the timer
 		return -1;
 
 	uint32_t flag = 0;
-	// Ожидание уведомления от таймера
+	// Wait for the timer notification
 	if (xTaskNotifyWait(0, (1 << xNotifyBit), &flag, pdMS_TO_TICKS((period / 1000) + 10)) != pdTRUE)
 	{
-		stop(); // Остановка таймера в случае тайм-аута
+		stop(); // Stop the timer on timeout
 		return -2;
 	}
 
-	stop(); // Остановка таймера после успешного уведомления
+	stop(); // Stop the timer after successful notification
 	return 0;
 }
 
 /**
- * \brief Обработчик срабатывания таймера.
- * \details Отправляет уведомление или сообщение задаче в зависимости от настроек.
+ * \brief Handler for the timer trigger event.
+ * \details Sends a notification or message to the task based on the settings.
  */
 void IRAM_ATTR CDelayTimer::timer()
 {
 	BaseType_t do_yield = pdFALSE;
 	if (mEventType == ETimerEvent::Notify)
 	{
-		// Уведомление задачи
+		// Notify the task
 		xTaskNotifyFromISR(mTaskToNotify, (1 << mNotifyBit), eSetBits, &do_yield);
 	}
 	else
 	{
-		// Отправка сообщения задаче
+		// Send a message to the task
 		STaskMessage msg;
-		msg.msgID = mTimerCmd; // Установка команды сообщения
+		msg.msgID = mTimerCmd; // Set the message command
 		if (mEventType == ETimerEvent::SendBack)
 		{
-			mTask->sendMessageFromISR(&msg, &do_yield); // Отправка в конец очереди
+			mTask->sendMessageFromISR(&msg, &do_yield); // Send to the back of the queue
 		}
 		else
 		{
-			mTask->sendMessageFrontFromISR(&msg, &do_yield); // Отправка в начало очереди
+			mTask->sendMessageFrontFromISR(&msg, &do_yield); // Send to the front of the queue
 		}
 	}
-	// portYIELD_FROM_ISR(do_yield); // Возможный вызов перепланирования (закомментирован)
+	// portYIELD_FROM_ISR(do_yield); // Potential call for rescheduling (commented out)
 }

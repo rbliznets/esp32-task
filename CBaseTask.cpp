@@ -1,9 +1,12 @@
 /*!
 	\file
-	\brief Базовый класс для реализации задачи FreeRTOS в многоядерном CPU.
-	\authors Близнец Р.А. (r.bliznets@gmail.com)
+	\brief Base class for implementing FreeRTOS tasks on multi-core CPUs.
+	\authors Bliznets R.A. (r.bliznets@gmail.com)
 	\version 1.3.0.0
 	\date 28.04.2020
+	\details This class provides a framework for creating and managing FreeRTOS tasks.
+			 It includes message queue handling, task lifecycle management,
+			 and support for both standard task functions and ISR-safe functions.
 */
 #include "CBaseTask.h"
 #include <cstdio>
@@ -12,85 +15,87 @@
 #include "CTrace.h"
 #include "esp_heap_caps.h"
 
-// Основная функция задачи, которая вызывается FreeRTOS при запуске задачи.
-// Эта функция выполняет следующие действия:
-// 1. Вызывает метод `run()` для выполнения основной логики задачи.
-// 2. После завершения работы удаляет очередь сообщений (`mTaskQueue`).
-// 3. Если включена поддержка `vTaskDelete`, удаляет саму задачу.
+// Static task function that serves as the entry point for the FreeRTOS task.
+// This function is passed to xTaskCreatePinnedToCore and executes the main logic
+// defined in the run() method of the CBaseTask instance.
+// After run() completes, it cleans up the message queue and deletes the task itself
+// (if vTaskDelete is supported).
 void CBaseTask::vTask(void *pvParameters)
 {
-	// Приводим параметр к типу CBaseTask* и вызываем метод run().
+	// Cast the parameter back to CBaseTask* and call the instance's run method.
 	((CBaseTask *)pvParameters)->run();
 
-	// Удаляем очередь сообщений после завершения работы задачи.
+	// Delete the associated message queue after the task logic finishes.
 	vQueueDelete(((CBaseTask *)pvParameters)->mTaskQueue);
 	((CBaseTask *)pvParameters)->mTaskQueue = nullptr;
 
 #if (INCLUDE_vTaskDelete == 1)
-	// Если поддерживается удаление задач, логируем завершение и удаляем задачу.
+	// If task deletion is supported by FreeRTOS, log exit and delete the task.
 	ESP_LOGD(pcTaskGetName(((CBaseTask *)pvParameters)->mTaskHandle), "exit");
 	((CBaseTask *)pvParameters)->mTaskHandle = nullptr;
-	vTaskDelete(nullptr);
+	vTaskDelete(nullptr); // Delete the currently running task.
 #else
-	// Если удаление задач не поддерживается, задача зацикливается.
+	// If task deletion is not supported, the task enters an infinite loop.
 	for (;;)
-		vTaskDelay(pdMS_TO_TICKS(1000));
+		vTaskDelay(pdMS_TO_TICKS(1000)); // Delay to prevent excessive CPU usage in the loop.
 #endif
 }
 
-// Деструктор класса CBaseTask.
-// Удаляет задачу и связанную с ней очередь сообщений, если это возможно.
+// Destructor for the CBaseTask class.
+// Ensures that the associated FreeRTOS task and its message queue are deleted
+// if task deletion is supported by FreeRTOS.
 CBaseTask::~CBaseTask()
 {
 #if (INCLUDE_vTaskDelete == 1)
-	if (mTaskHandle != nullptr)
+	if (mTaskHandle != nullptr) // Check if the task handle is valid.
 	{
-		// Удаляем очередь сообщений, если она существует.
+		// Delete the message queue if it exists.
 		if (mTaskQueue != nullptr)
 			vQueueDelete(mTaskQueue);
 
-		// Удаляем саму задачу.
+		// Delete the FreeRTOS task itself.
 		vTaskDelete(mTaskHandle);
 	}
 #endif
 }
 
-// Метод для инициализации задачи.
-// Создает очередь сообщений и регистрирует задачу в планировщике FreeRTOS.
+// Initializes the task by creating the message queue and starting the task in the FreeRTOS scheduler.
+// Pins the task to the specified CPU core.
 void CBaseTask::init(const char *name, unsigned short usStack, UBaseType_t uxPriority, UBaseType_t queueLength, BaseType_t coreID)
 {
-	// Проверяем корректность входных параметров.
+	// Validate input parameters against FreeRTOS configuration limits.
 	assert(uxPriority <= configMAX_PRIORITIES);
 	assert(usStack >= configMINIMAL_STACK_SIZE);
 	assert(std::strlen(name) < configMAX_TASK_NAME_LEN);
 
-	// Создаем очередь сообщений заданной длины.
+	// Create the FreeRTOS queue for task messages.
 	mTaskQueue = xQueueCreate(queueLength, sizeof(STaskMessage));
 
-	// Создаем задачу и привязываем ее к указанному ядру процессора.
+	// Create the FreeRTOS task, pin it to the specified core, and store its handle.
 	xTaskCreatePinnedToCore(vTask, name, usStack, this, uxPriority, &mTaskHandle, coreID);
 }
 
-// Отправляет сообщение в конец очереди.
-// Возвращает true, если сообщение успешно отправлено.
+// Sends a message to the end of the task's queue.
+// Optionally sends a task notification and frees memory on failure.
+// Returns true if the message was successfully sent, false otherwise.
 bool CBaseTask::sendMessage(STaskMessage *msg, TickType_t xTicksToWait, bool free_mem)
 {
-	assert(msg != nullptr); // Проверяем, что указатель на сообщение не равен nullptr.
+	assert(msg != nullptr); // Ensure the message pointer is valid.
 
-	// Отправляем сообщение в очередь.
+	// Attempt to send the message to the back of the queue.
 	if (xQueueSend(mTaskQueue, msg, xTicksToWait) == pdPASS)
 	{
-		// Если установлен флаг уведомления, отправляем уведомление задаче.
+		// If notification is enabled, notify the task.
 		if (mNotify != 0)
 		{
 			return (xTaskNotify(mTaskHandle, mNotify, eSetBits) == pdPASS);
 		}
 		else
-			return true; // Сообщение успешно отправлено без уведомления.
+			return true; // Message sent successfully without notification.
 	}
 	else
 	{
-		// Если отправка не удалась, освобождаем память (если требуется) и записываем предупреждение.
+		// If sending failed, free the message body memory if requested and log a warning.
 		if (free_mem)
 			vPortFree(msg->msgBody);
 		TRACE_WARNING(pcTaskGetName(mTaskHandle), msg->msgID);
@@ -98,26 +103,27 @@ bool CBaseTask::sendMessage(STaskMessage *msg, TickType_t xTicksToWait, bool fre
 	}
 }
 
-// Отправляет сообщение в начало очереди.
-// Возвращает true, если сообщение успешно отправлено.
+// Sends a message to the front of the task's queue (highest priority).
+// Optionally sends a task notification and frees memory on failure.
+// Returns true if the message was successfully sent, false otherwise.
 bool CBaseTask::sendMessageFront(STaskMessage *msg, TickType_t xTicksToWait, bool free_mem)
 {
-	assert(msg != nullptr); // Проверяем, что указатель на сообщение не равен nullptr.
+	assert(msg != nullptr); // Ensure the message pointer is valid.
 
-	// Отправляем сообщение в начало очереди.
+	// Attempt to send the message to the front of the queue.
 	if (xQueueSendToFront(mTaskQueue, msg, xTicksToWait) == pdPASS)
 	{
-		// Если установлен флаг уведомления, отправляем уведомление задаче.
+		// If notification is enabled, notify the task.
 		if (mNotify != 0)
 		{
 			return (xTaskNotify(mTaskHandle, mNotify, eSetBits) == pdPASS);
 		}
 		else
-			return true; // Сообщение успешно отправлено без уведомления.
+			return true; // Message sent successfully without notification.
 	}
 	else
 	{
-		// Если отправка не удалась, освобождаем память (если требуется) и записываем предупреждение.
+		// If sending failed, free the message body memory if requested and log a warning.
 		if (free_mem)
 			vPortFree(msg->msgBody);
 		TRACE_WARNING(pcTaskGetName(mTaskHandle), msg->msgID);
@@ -125,16 +131,18 @@ bool CBaseTask::sendMessageFront(STaskMessage *msg, TickType_t xTicksToWait, boo
 	}
 }
 
-// Отправляет сообщение из ISR в конец очереди.
-// Возвращает true, если сообщение успешно отправлено.
+// Sends a message to the task's queue from an Interrupt Service Routine (ISR).
+// This function is marked with IRAM_ATTR for faster execution from ISR context.
+// Optionally sends a task notification from ISR context.
+// Returns true if the message was successfully sent, false otherwise.
 bool IRAM_ATTR CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken)
 {
-	assert(msg != nullptr); // Проверяем, что указатель на сообщение не равен nullptr.
+	assert(msg != nullptr); // Ensure the message pointer is valid.
 
-	// Отправляем сообщение из ISR в конец очереди.
+	// Attempt to send the message to the back of the queue from ISR context.
 	if (xQueueSendToBackFromISR(mTaskQueue, msg, pxHigherPriorityTaskWoken) == pdPASS)
 	{
-		// Если установлен флаг уведомления, отправляем уведомление задаче из ISR.
+		// If notification is enabled, notify the task from ISR context.
 		if (mNotify != 0)
 		{
 			if (xTaskNotifyFromISR(mTaskHandle, mNotify, eSetBits, pxHigherPriorityTaskWoken) == pdPASS)
@@ -143,32 +151,34 @@ bool IRAM_ATTR CBaseTask::sendMessageFromISR(STaskMessage *msg, BaseType_t *pxHi
 			}
 			else
 			{
-				// Если отправка не удалась, записываем предупреждение.
+				// If notification failed, log the error from ISR context.
 				TRACE_FROM_ISR("sendMessageFromISR2", msg->msgID, pxHigherPriorityTaskWoken);
 				return false;
 			}
 		}
 		else
-			return true; // Сообщение успешно отправлено без уведомления.
+			return true; // Message sent successfully without notification.
 	}
 	else
 	{
-		// Если отправка не удалась, записываем предупреждение.
+		// If sending failed, log the error from ISR context.
 		TRACE_FROM_ISR("sendMessageFromISR", msg->msgID, pxHigherPriorityTaskWoken);
 		return false;
 	}
 }
 
-// Отправляет сообщение из ISR в начало очереди.
-// Возвращает true, если сообщение успешно отправлено.
+// Sends a message to the front of the task's queue from an Interrupt Service Routine (ISR).
+// This function is marked with IRAM_ATTR for faster execution from ISR context.
+// Optionally sends a task notification from ISR context.
+// Returns true if the message was successfully sent, false otherwise.
 bool IRAM_ATTR CBaseTask::sendMessageFrontFromISR(STaskMessage *msg, BaseType_t *pxHigherPriorityTaskWoken)
 {
-	assert(msg != nullptr); // Проверяем, что указатель на сообщение не равен nullptr.
+	assert(msg != nullptr); // Ensure the message pointer is valid.
 
-	// Отправляем сообщение из ISR в начало очереди.
+	// Attempt to send the message to the front of the queue from ISR context.
 	if (xQueueSendToFrontFromISR(mTaskQueue, msg, pxHigherPriorityTaskWoken) == pdPASS)
 	{
-		// Если установлен флаг уведомления, отправляем уведомление задаче из ISR.
+		// If notification is enabled, notify the task from ISR context.
 		if (mNotify != 0)
 		{
 			if (xTaskNotifyFromISR(mTaskHandle, mNotify, eSetBits, pxHigherPriorityTaskWoken) == pdPASS)
@@ -177,53 +187,57 @@ bool IRAM_ATTR CBaseTask::sendMessageFrontFromISR(STaskMessage *msg, BaseType_t 
 			}
 			else
 			{
-				// Если отправка не удалась, записываем предупреждение.
+				// If notification failed, log the error from ISR context.
 				TRACE_FROM_ISR("sendMessageFrontFromISR2", msg->msgID, pxHigherPriorityTaskWoken);
 				return false;
 			}
 		}
 		else
-			return true; // Сообщение успешно отправлено без уведомления.
+			return true; // Message sent successfully without notification.
 	}
 	else
 	{
-		// Если отправка не удалась, записываем предупреждение.
+		// If sending failed, log the error from ISR context.
 		TRACE_FROM_ISR("sendMessageFrontFromISR", msg->msgID, pxHigherPriorityTaskWoken);
 		return false;
 	}
 }
 
-// Получает сообщение из очереди.
-// Возвращает true, если сообщение успешно получено.
+// Receives a message from the task's queue.
+// Blocks for up to xTicksToWait ticks if the queue is empty.
+// Returns true if a message was successfully received, false if the timeout expired.
 bool CBaseTask::getMessage(STaskMessage *msg, TickType_t xTicksToWait)
 {
-	assert(msg != nullptr); // Проверяем, что указатель на сообщение не равен nullptr.
+	assert(msg != nullptr); // Ensure the message pointer is valid for receiving data.
 
-	// Получаем сообщение из очереди.
+	// Attempt to receive a message from the queue.
 	return (xQueueReceive(mTaskQueue, msg, xTicksToWait) == pdTRUE);
 }
 
-// Выделяет память для тела сообщения.
-// Возвращает указатель на выделенную память.
+// Allocates memory for the message body and initializes the message header.
+// Uses PSRAM if available and requested, otherwise uses standard heap.
+// Returns a pointer to the allocated memory block for the message body.
 uint8_t *CBaseTask::allocNewMsg(STaskMessage *msg, uint16_t cmd, uint16_t size, bool psram)
 {
-	assert(msg != nullptr); // Проверяем, что указатель на сообщение не равен nullptr.
-	assert(size > 0);		// Размер должен быть больше нуля.
+	assert(msg != nullptr); // Ensure the message pointer is valid.
+	assert(size > 0);		// Size must be greater than zero.
 
-	// Заполняем заголовок сообщения.
+	// Initialize the message header fields.
 	msg->msgID = cmd;
 	msg->shortParam = size;
 
 #ifdef CONFIG_SPIRAM
-	// Если доступна внешняя PSRAM, используем её для выделения памяти.
+	// If PSRAM is configured and requested, allocate memory from PSRAM.
 	if (psram)
 		msg->msgBody = heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
 	else
+		// Otherwise, allocate from the default heap (likely DRAM).
 		msg->msgBody = heap_caps_malloc(size, MALLOC_CAP_DEFAULT);
 #else
-	// Используем стандартное выделение памяти.
+	// If PSRAM is not configured, allocate from the standard FreeRTOS heap.
 	msg->msgBody = pvPortMalloc(msg->shortParam);
 #endif // CONFIG_SPIRAM
 
-	return (uint8_t *)msg->msgBody; // Возвращаем указатель на выделенную память.
+	// Return a pointer to the allocated message body memory.
+	return (uint8_t *)msg->msgBody;
 }

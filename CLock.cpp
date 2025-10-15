@@ -1,41 +1,47 @@
 /*!
 	\file
-	\brief Базовый класс для захвата ресурса задач FreeRTOS.
-	\authors Близнец Р.А. (r.bliznets@gmail.com)
+	\brief Base class for capturing FreeRTOS task resources.
+	\authors Bliznets R.A. (r.bliznets@gmail.com)
 	\version 1.1.0.0
 	\date 28.04.2020
+	\details This class provides basic locking mechanisms (mutex) for thread safety
+			 in FreeRTOS environments. It serves as a base class that other classes
+			 can inherit from to protect shared resources.
 */
 #include "CLock.h"
 
-// Конструктор класса CLock.
-// Инициализирует объект CLock. В данном случае конструктор пустой,
-// так как предполагается, что мьютекс (mMutex) будет инициализирован
-// в другом месте (например, в конструкторе производного класса или при создании объекта).
+// Constructor for the CLock class.
+// Initializes the CLock object. In this implementation, the constructor is empty.
+// It's assumed that the mutex (mMutex) will be initialized elsewhere,
+// potentially in a derived class constructor or during object creation,
+// before `lock()` or `unlock()` are called.
 CLock::CLock()
 {
+	// The member variable mMutex is expected to be initialized by the derived class
+	// or by the code creating the instance.
 }
 
-// Метод lock() используется для блокировки доступа к общему ресурсу.
-// Если мьютекс (mMutex) был успешно создан и не равен nullptr,
-// то вызывается функция xSemaphoreTake(), которая блокирует мьютекс.
-// Параметр portMAX_DELAY указывает на то, что задача будет ждать бесконечно долго,
-// пока мьютекс не станет доступным.
+// The lock() method is used to lock access to a shared resource.
+// If the mutex (mMutex) was successfully created and is not nullptr,
+// it calls xSemaphoreTake() to acquire the mutex.
+// The portMAX_DELAY parameter indicates that the calling task will wait indefinitely
+// until the mutex becomes available.
 void CLock::lock()
 {
-	if (mMutex != nullptr) // Проверяем, что мьютекс существует.
+	if (mMutex != nullptr) // Check if the mutex exists and is valid.
 	{
-		xSemaphoreTake(mMutex, portMAX_DELAY); // Захватываем мьютекс.
+		xSemaphoreTake(mMutex, portMAX_DELAY); // Acquire the mutex.
 	}
 }
 
-// Метод unlock() используется для разблокировки доступа к общему ресурсу.
-// Если мьютекс (mMutex) был успешно создан и не равен nullptr,
-// то вызывается функция xSemaphoreGive(), которая освобождает мьютекс,
-// позволяя другим задачам получить доступ к ресурсу.
+// The unlock() method is used to unlock access to a shared resource.
+// If the mutex (mMutex) was successfully created and is not nullptr,
+// it calls xSemaphoreGive() to release the mutex,
+// allowing other tasks to gain access to the resource.
 void CLock::unlock()
 {
-	if (mMutex != nullptr) // Проверяем, что мьютекс существует.
+	if (mMutex != nullptr) // Check if the mutex exists and is valid.
 	{
-		xSemaphoreGive(mMutex); // Освобождаем мьютекс.
+		xSemaphoreGive(mMutex); // Release the mutex.
 	}
 }

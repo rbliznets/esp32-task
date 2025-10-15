@@ -1,95 +1,99 @@
 /*!
 	\file
-	\brief Программный таймер под задачи FreeRTOS.
-	\authors Близнец Р.А. (r.bliznets@gmail.com)
+	\brief Software timer for FreeRTOS tasks.
+	\authors Bliznets R.A. (r.bliznets@gmail.com)
 	\version 1.2.0.0
 	\date 28.04.2020
-	\copyright (c) Copyright 2021, ООО "Глобал Ориент", Москва, Россия, http://www.glorient.ru/
+	\copyright (c) Copyright 2021, LLC "Global Orient", Moscow, Russia, http://www.glorient.ru/
+	\details This file implements the CSoftwareTimer class, which wraps FreeRTOS software timers
+			 to provide a convenient way to trigger actions (notifications or message sends)
+			 in FreeRTOS tasks after a specified time period.
 */
 
 #include "CSoftwareTimer.h"
 #include <cstdio>
 #include "CTrace.h"
 
-// Конструктор класса CSoftwareTimer
+// Constructor for the CSoftwareTimer class
 CSoftwareTimer::CSoftwareTimer(uint8_t xNotifyBit, uint16_t timerCmd)
 {
-	// Проверка, что номер уведомления меньше 32 (так как используется bitmask)
+	// Verify that the notification bit number is less than 32 (as it's used in a bitmask)
 	assert(xNotifyBit < 32);
-	
-	// Если включена поддержка управления питанием, создаем блокировку для предотвращения перехода в режим неглубокого сна
-// #if CONFIG_PM_ENABLE
-// 	esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "st", &mPMLock);
-// #endif
 
-	// Инициализация полей класса
+	// If power management support is enabled, create a lock to prevent light sleep mode
+	// #if CONFIG_PM_ENABLE
+	// 	esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "st", &mPMLock);
+	// #endif
+
+	// Initialize class members
 	mNotifyBit = xNotifyBit;
 	mTimerCmd = timerCmd;
 
-	// Создание таймера с именем "STimer", периодом 1000 мс (pdMS_TO_TICKS(1000)), одноразовым запуском (pdFALSE)
+	// Create a FreeRTOS timer named "STimer", with a period of 1000 ms (pdMS_TO_TICKS(1000)),
+	// one-shot mode (pdFALSE), passing 'this' as the timer ID, and setting the callback function
 	mTimerHandle = xTimerCreate("STimer", pdMS_TO_TICKS(1000), pdFALSE, this, CSoftwareTimer::vTimerCallback);
-	
-	// Проверка успешности создания таймера
+
+	// Check if the timer was created successfully
 	if (mTimerHandle == nullptr)
 		TRACE_ERROR("CSoftwareTimer has not created", -1);
 }
 
-// Деструктор класса CSoftwareTimer
+// Destructor for the CSoftwareTimer class
 CSoftwareTimer::~CSoftwareTimer()
 {
-	// Если таймер был создан, останавливаем и удаляем его
+	// If the timer was created, stop and delete it
 	if (mTimerHandle != nullptr)
 	{
 		stop();
 		xTimerDelete(mTimerHandle, 1);
 	}
-	
-	// Удаление блокировки управления питанием, если она была создана
-// #if CONFIG_PM_ENABLE
-// 	esp_pm_lock_delete(mPMLock);
-// #endif
+
+	// Delete the power management lock if it was created
+	// #if CONFIG_PM_ENABLE
+	// 	esp_pm_lock_delete(mPMLock);
+	// #endif
 }
 
-// Функция обратного вызова таймера (выполняется при срабатывании таймера)
+// Timer callback function (executed when the timer expires)
 void CSoftwareTimer::vTimerCallback(TimerHandle_t xTimer)
 {
-	// Получение указателя на объект CSoftwareTimer из данных таймера
+	// Get the pointer to the CSoftwareTimer object from the timer's ID data
 	CSoftwareTimer *tm = (CSoftwareTimer *)pvTimerGetTimerID(xTimer);
-	
-	// Вызов метода timer у объекта CSoftwareTimer
+
+	// Call the timer() method on the CSoftwareTimer object
 	tm->timer();
 }
 
-// Метод для запуска таймера с заданным периодом и режимом автоматического перезапуска
+// Method to start the timer with a specified period and auto-reload mode
 int CSoftwareTimer::start(uint32_t period, bool autoRefresh)
 {
-	// Проверка, что период больше 0
+	// Verify that the period is greater than 0
 	assert(pdMS_TO_TICKS(period) > 0);
 
-	// Остановка таймера перед запуском с новыми параметрами
+	// Stop the timer before starting with new parameters
 	stop();
-	
-	// Установка типа события на уведомление и получения текущей задачи для уведомления
+
+	// Set the event type to notification and get the current task handle for notification
 	mEventType = ETimerEvent::Notify;
 	mTaskToNotify = xTaskGetCurrentTaskHandle();
 
-	// Установка режима перезапуска таймера (одноразовый или периодический)
+	// Set the timer's reload mode (one-shot or periodic)
 	vTimerSetReloadMode(mTimerHandle, autoRefresh);
-	
-	// Изменение периода таймера на заданный
+
+	// Change the timer's period to the specified value
 	if (xTimerChangePeriod(mTimerHandle, pdMS_TO_TICKS(period), 1) != pdTRUE)
 	{
 		TRACE_ERROR("CSoftwareTimer:xTimerChangePeriod failed", (uint16_t)period);
 		return -2;
 	}
 
-	// Запуск таймера
+	// Start the timer
 	if (xTimerStart(mTimerHandle, 1) == pdTRUE)
 	{
-// #if CONFIG_PM_ENABLE
-// 		// Получение блокировки управления питанием для предотвращения перехода в режим неглубокого сна
-// 		esp_pm_lock_acquire(mPMLock);
-// #endif
+		// #if CONFIG_PM_ENABLE
+		// 		// Acquire the power management lock to prevent light sleep mode
+		// 		esp_pm_lock_acquire(mPMLock);
+		// #endif
 		return 0;
 	}
 	else
@@ -99,33 +103,34 @@ int CSoftwareTimer::start(uint32_t period, bool autoRefresh)
 	}
 }
 
+// Overloaded start method to send a message to a CBaseTask
 int CSoftwareTimer::start(CBaseTask *task, ETimerEvent event, uint32_t period, bool autoRefresh)
 {
-	// Проверка, что переданный указатель на задачу не равен nullptr
+	// Verify that the passed task pointer is not nullptr
 	assert(task != nullptr);
-	
-	// Проверка, что период больше 0
+
+	// Verify that the period is greater than 0
 	assert(pdMS_TO_TICKS(period) > 0);
 
-	// Остановка таймера перед запуском с новыми параметрами
+	// Stop the timer before starting with new parameters
 	stop();
-	
-	// Установка типа события и задачи для уведомления
+
+	// Set the event type and the task to notify/send message to
 	mEventType = event;
 	mTask = task;
 	mTaskToNotify = mTask->getTask();
 
-	// Установка режима перезапуска таймера (одноразовый или периодический)
+	// Set the timer's reload mode (one-shot or periodic)
 	vTimerSetReloadMode(mTimerHandle, autoRefresh);
-	
-	// Изменение периода таймера на заданный
+
+	// Change the timer's period to the specified value
 	if (xTimerChangePeriod(mTimerHandle, pdMS_TO_TICKS(period), 1) != pdTRUE)
 	{
 		TRACE_ERROR("CSoftwareTimer:xTimerChangePeriod failed", (uint16_t)period);
 		return -2;
 	}
 
-	// Запуск таймера
+	// Start the timer
 	if (xTimerStart(mTimerHandle, 1) == pdTRUE)
 	{
 		return 0;
@@ -137,18 +142,19 @@ int CSoftwareTimer::start(CBaseTask *task, ETimerEvent event, uint32_t period, b
 	}
 }
 
+// Method to stop the timer
 int CSoftwareTimer::stop()
 {
-	// Проверка, что таймер запущен
+	// Check if the timer is running
 	if (isRun())
 	{
-		// Остановка таймера
+		// Stop the timer
 		if (xTimerStop(mTimerHandle, 1) == pdTRUE)
 		{
-// #if CONFIG_PM_ENABLE
-// 			// Освобождение блокировки управления питанием
-// 			esp_pm_lock_release(mPMLock);
-// #endif
+			// #if CONFIG_PM_ENABLE
+			// 			// Release the power management lock
+			// 			esp_pm_lock_release(mPMLock);
+			// #endif
 			return 0;
 		}
 		else
@@ -159,19 +165,20 @@ int CSoftwareTimer::stop()
 	}
 	else
 	{
-		// Логирование информации о том, что таймер не запущен (закомментировано)
+		// Log information that the timer is not running (commented out)
 		// ESP_LOGI("CSoftwareTimer", "mTimerHandle==NULL");
 		return -1;
 	}
 }
 
+// Method called by the timer callback to handle the timer event
 void CSoftwareTimer::timer()
 {
-	// Обработка события уведомления
+	// Handle notification event
 	if (mEventType == ETimerEvent::Notify)
 		xTaskNotify(mTaskToNotify, (1 << mNotifyBit), eSetBits);
-	
-	// Обработка события отправки команды обратно
+
+	// Handle send-back event (sends a command message to the task)
 	else if (mEventType == ETimerEvent::SendBack)
 		mTask->sendCmd(mTimerCmd, 0, 0, 1);
 }

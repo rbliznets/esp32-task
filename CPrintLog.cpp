@@ -1,28 +1,32 @@
 /*!
     \file
-    \brief Класс журнала ошибок системы для консоли.
-    \authors Близнец Р.А. (r.bliznets@gmail.com)
+    \brief Class for system error logging to the console.
+    \authors Bliznets R.A. (r.bliznets@gmail.com)
     \version 1.3.0.0
     \date 10.07.2020
+    \details This class provides functionality for formatting and printing log messages
+             to the console, including timestamp information and optional system restart
+             on critical errors. It supports logging error codes, various data types
+             in different formats (decimal, hexadecimal), and timing information.
 */
 
 #include "CPrintLog.h"
 #include "esp_log.h"
 
-// Метод для формирования заголовка лога с временной меткой
+// Method to format the log header with a timestamp
 void CPrintLog::printHeader(uint64_t time, uint32_t n)
 {
-    // Вычисление времени в единицах измерения, зависящих от конфигурации
+    // Calculate time based on the provided divisor 'n'
     uint64_t res = time / n;
 
 #if (CONFIG_TRACE_USEC == 1)
-    // Если используется микросекунды, формируем заголовок с микросекундами
+    // If microseconds are configured, format the header with microseconds
     std::snprintf(m_header, sizeof(m_header), "(+%liusec)", (long)res);
 #else
-    // В зависимости от значения res выбираем подходящую единицу измерения времени
+    // Choose the appropriate time unit based on the calculated value 'res'
     if (res >= 10000000)
     {
-        // Если res больше или равно 10 миллионам микросекунд, преобразуем в секунды
+        // If 'res' is greater than or equal to 10 million (assuming microseconds), convert to seconds
         std::snprintf(m_header, sizeof(m_header), "(+%lisec)", (long)(res / 1000000));
     }
     else
@@ -31,39 +35,39 @@ void CPrintLog::printHeader(uint64_t time, uint32_t n)
         {
             if (res < 10)
             {
-                // Если res меньше 10 микросекунд, преобразуем в наносекунды с двойной точностью
+                // If 'res' is less than 10 (assuming microseconds), convert to nanoseconds with double precision
                 double f = time / (double)n;
                 std::snprintf(m_header, sizeof(m_header), "(+%linsec)", (long)(f * 1000));
             }
             else
             {
-                // Если res меньше 10000 микросекунд, формируем заголовок с микросекундами
+                // If 'res' is less than 10000 (assuming microseconds), format the header with microseconds
                 std::snprintf(m_header, sizeof(m_header), "(+%liusec)", (long)res);
             }
         }
         else
         {
-            // Если res между 10000 и 9999999 микросекундами, преобразуем в миллисекунды
+            // If 'res' is between 10000 and 9999999 (assuming microseconds), convert to milliseconds
             std::snprintf(m_header, sizeof(m_header), "(+%limsec)", (long)(res / 1000));
         }
     }
 #endif
 }
 
-// Метод для вывода сообщения об ошибке с возможностью перезагрузки системы
+// Method to print an error message with optional system restart
 void CPrintLog::trace(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot)
 {
-    // Получение текущего времени таймера
+    // Get the current timer value
     uint64_t res = getTimer();
 
-    // Проверка, что код ошибки не равен специальному значению (0x7fffffff), используемому для игнорирования вывода
+    // Check if the error code is not a special value (0x7fffffff) used to ignore output
     if (errCode != 0x7fffffff)
     {
-        // Формирование заголовка лога с временной меткой
+        // Format the log header with the timestamp
         printHeader(res);
 
 #ifdef CONFIG_DEBUG_TRACE_ESPLOG
-        // Если используется ESP_LOG_LEVEL, формируем сообщение с использованием этой функции
+        // If ESP_LOG_LEVEL is configured, format the message using ESP-IDF logging
         if (reboot)
         {
             if (strError == nullptr)
@@ -89,7 +93,7 @@ void CPrintLog::trace(const char *strError, int32_t errCode, esp_log_level_t lev
             }
         }
 #else
-        // Если не используется ESP_LOG_LEVEL, формируем сообщение с использованием std::printf
+        // If ESP_LOG_LEVEL is not configured, format the message using std::printf
         std::printf(m_header);
         if (reboot)
         {
@@ -120,19 +124,21 @@ void CPrintLog::trace(const char *strError, int32_t errCode, esp_log_level_t lev
 #endif
     }
 }
+
+// Overloaded trace method for logging uint8_t arrays (as hex)
 void CPrintLog::trace(const char *strError, uint8_t *data, uint32_t size)
 {
-    // Получение текущего времени таймера
+    // Get the current timer value
     uint64_t res = getTimer();
 
-    // Формирование заголовка лога с временной меткой
+    // Format the log header with the timestamp
     printHeader(res);
 
 #ifdef CONFIG_DEBUG_TRACE_ESPLOG
-    // Если используется ESP_LOG_LEVEL, выводим данные в шестнадцатеричном формате
+    // If ESP_LOG_LEVEL is configured, print data in hexadecimal format using ESP-IDF logging
     ESP_LOG_BUFFER_HEX(m_header, data, size);
 #else
-    // Если не используется ESP_LOG_LEVEL, используем std::printf для вывода данных
+    // If ESP_LOG_LEVEL is not configured, use std::printf to print the data
     std::printf(m_header);
     std::printf("%s %ld:", strError, size);
     std::printf(" 0x%02x", data[0]);
@@ -144,19 +150,20 @@ void CPrintLog::trace(const char *strError, uint8_t *data, uint32_t size)
 #endif
 }
 
+// Overloaded trace method for logging int8_t arrays (as decimal)
 void CPrintLog::trace(const char *strError, int8_t *data, uint32_t size)
 {
-    // Получение текущего времени таймера
+    // Get the current timer value
     uint64_t res = getTimer();
 
-    // Формирование заголовка лога с временной меткой
+    // Format the log header with the timestamp
     printHeader(res);
 
 #ifdef CONFIG_DEBUG_TRACE_ESPLOG
-    // Если используется ESP_LOG_LEVEL, выводим данные в шестнадцатеричном формате
+    // If ESP_LOG_LEVEL is configured, print data in hexadecimal format using ESP-IDF logging
     ESP_LOG_BUFFER_HEX(m_header, data, size);
 #else
-    // Если не используется ESP_LOG_LEVEL, используем std::printf для вывода данных
+    // If ESP_LOG_LEVEL is not configured, use std::printf to print the data
     std::printf(m_header);
     std::printf("%s %ld:", strError, size);
     std::printf(" %d", data[0]);
@@ -168,19 +175,21 @@ void CPrintLog::trace(const char *strError, int8_t *data, uint32_t size)
 #endif
 }
 
+// Overloaded trace method for logging uint16_t arrays (as hex)
 void CPrintLog::trace(const char *strError, uint16_t *data, uint32_t size)
 {
-    // Получение текущего времени таймера
+    // Get the current timer value
     uint64_t res = getTimer();
 
-    // Формирование заголовка лога с временной меткой
+    // Format the log header with the timestamp
     printHeader(res);
 
 #ifdef CONFIG_DEBUG_TRACE_ESPLOG
-    // Если используется ESP_LOG_LEVEL, выводим данные в шестнадцатеричном формате
+    // If ESP_LOG_LEVEL is configured, print data in hexadecimal format using ESP-IDF logging
+    // Note: Size is multiplied by 2 to account for 16-bit elements when printing raw bytes
     ESP_LOG_BUFFER_HEX(m_header, data, size * 2);
 #else
-    // Если не используется ESP_LOG_LEVEL, используем std::printf для вывода данных
+    // If ESP_LOG_LEVEL is not configured, use std::printf to print the data
     std::printf(m_header);
     std::printf("%s %ld:", strError, size);
     std::printf(" 0x%04x", data[0]);
@@ -192,19 +201,21 @@ void CPrintLog::trace(const char *strError, uint16_t *data, uint32_t size)
 #endif
 }
 
+// Overloaded trace method for logging int16_t arrays (as decimal)
 void CPrintLog::trace(const char *strError, int16_t *data, uint32_t size)
 {
-    // Получение текущего времени таймера
+    // Get the current timer value
     uint64_t res = getTimer();
 
-    // Формирование заголовка лога с временной меткой
+    // Format the log header with the timestamp
     printHeader(res);
 
 #ifdef CONFIG_DEBUG_TRACE_ESPLOG
-    // Если используется ESP_LOG_LEVEL, выводим данные в шестнадцатеричном формате
+    // If ESP_LOG_LEVEL is configured, print data in hexadecimal format using ESP-IDF logging
+    // Note: Size is multiplied by 2 to account for 16-bit elements when printing raw bytes
     ESP_LOG_BUFFER_HEX(m_header, data, size * 2);
 #else
-    // Если не используется ESP_LOG_LEVEL, используем std::printf для вывода данных
+    // If ESP_LOG_LEVEL is not configured, use std::printf to print the data
     std::printf(m_header);
     std::printf("%s %ld:", strError, size);
     std::printf(" %d", (int)data[0]);
@@ -216,19 +227,21 @@ void CPrintLog::trace(const char *strError, int16_t *data, uint32_t size)
 #endif
 }
 
+// Overloaded trace method for logging uint32_t arrays (as hex)
 void CPrintLog::trace(const char *strError, uint32_t *data, uint32_t size)
 {
-    // Получение текущего времени таймера
+    // Get the current timer value
     uint64_t res = getTimer();
 
-    // Формирование заголовка лога с временной меткой
+    // Format the log header with the timestamp
     printHeader(res);
 
 #ifdef CONFIG_DEBUG_TRACE_ESPLOG
-    // Если используется ESP_LOG_LEVEL, выводим данные в шестнадцатеричном формате
+    // If ESP_LOG_LEVEL is configured, print data in hexadecimal format using ESP-IDF logging
+    // Note: Size is multiplied by 4 to account for 32-bit elements when printing raw bytes
     ESP_LOG_BUFFER_HEX(m_header, data, size * 4);
 #else
-    // Если не используется ESP_LOG_LEVEL, используем std::printf для вывода данных
+    // If ESP_LOG_LEVEL is not configured, use std::printf to print the data
     std::printf(m_header);
     std::printf("%s %ld:", strError, size);
     std::printf(" 0x%08x", (int)data[0]);
@@ -240,19 +253,21 @@ void CPrintLog::trace(const char *strError, uint32_t *data, uint32_t size)
 #endif
 }
 
+// Overloaded trace method for logging int32_t arrays (as decimal)
 void CPrintLog::trace(const char *strError, int32_t *data, uint32_t size)
 {
-    // Получение текущего времени таймера
+    // Get the current timer value
     uint64_t res = getTimer();
 
-    // Формирование заголовка лога с временной меткой
+    // Format the log header with the timestamp
     printHeader(res);
 
 #ifdef CONFIG_DEBUG_TRACE_ESPLOG
-    // Если используется ESP_LOG_LEVEL, выводим данные в шестнадцатеричном формате
+    // If ESP_LOG_LEVEL is configured, print data in hexadecimal format using ESP-IDF logging
+    // Note: Size is multiplied by 4 to account for 32-bit elements when printing raw bytes
     ESP_LOG_BUFFER_HEX(m_header, data, size * 4);
 #else
-    // Если не используется ESP_LOG_LEVEL, используем std::printf для вывода данных
+    // If ESP_LOG_LEVEL is not configured, use std::printf to print the data
     std::printf(m_header);
     std::printf("%s %ld:", strError, size);
     std::printf(" %d", (int)data[0]);
@@ -264,19 +279,20 @@ void CPrintLog::trace(const char *strError, int32_t *data, uint32_t size)
 #endif
 }
 
+// Method to print timing information with a custom divisor 'n'
 void CPrintLog::stopTime(const char *str, uint32_t n)
 {
-    // Получение текущего времени таймера
+    // Get the current timer value
     uint64_t res = getTimer();
 
-    // Формирование заголовка лога с временной меткой и делителем n
+    // Format the log header with the timestamp and divisor 'n'
     printHeader(res, n);
 
 #ifdef CONFIG_DEBUG_TRACE_ESPLOG
-    // Если используется ESP_LOG_LEVEL, выводим сообщение об остановке времени
+    // If ESP_LOG_LEVEL is configured, print the timing message using ESP-IDF logging
     ESP_LOGI(m_header, "%s", str);
 #else
-    // Если не используется ESP_LOG_LEVEL, используем std::printf для вывода сообщения
+    // If ESP_LOG_LEVEL is not configured, use std::printf to print the message
     std::printf(m_header);
     std::printf(" %s\n", str);
 #endif

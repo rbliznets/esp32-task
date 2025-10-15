@@ -182,7 +182,7 @@ public:
 	*/
 	inline void init(UBaseType_t queueLength = 30, BaseType_t coreID = 1)
 	{
-		CBaseTask::init("trace", 2048+256, 1, queueLength, coreID);
+		CBaseTask::init("trace", 1024*2+512, 1, queueLength, coreID);
 	};
 
 	/// Виртуальный метод трассировки

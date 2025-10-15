@@ -1,37 +1,37 @@
 /*!
     \file
-    \brief Класс для работы с АЦП (ADC) в режиме однократного замера (one shot) с разрешением 12 бит.
-    \authors Близнец Р.А. (r.bliznets@gmail.com)
-    \version 0.1.0.0
+    \brief Class for working with ADC (Analog-to-Digital Converter) in single-shot mode with 12-bit resolution.
+    \authors Bliznets R.A. (r.bliznets@gmail.com)
+    \version 1.0.0.0
     \date 23.11.2024
-    \details Класс реализует паттерн Singleton для управления ресурсами ADC.
-             Поддерживает работу с двумя модулями ADC (ADC1, ADC2) на ESP.
-             Обеспечивает потокобезопасность за счет использования блокировок.
+    \details The class implements the Singleton pattern for managing ADC resources.
+             Supports working with two ADC modules (ADC1, ADC2) on ESP.
+             Ensures thread safety through the use of locks.
 */
 
-#include "ADCMaster.h" // Заголовочный файл класса ADCMaster
-#include "esp_log.h"   // Библиотека для логирования в среде ESP-IDF
+#include "ADCMaster.h" // Header file for the ADCMaster class
+#include "esp_log.h"   // Library for logging in the ESP-IDF environment
 
-static const char *TAG = "ADCMaster"; // Тег для идентификации логов данного класса
+static const char *TAG = "ADCMaster"; // Tag for identifying logs from this class
 
-ADCMaster *ADCMaster::theSingleInstance = nullptr; // Указатель на единственный экземпляр класса
+ADCMaster *ADCMaster::theSingleInstance = nullptr; // Pointer to the single instance of the class
 
 /**
- * \brief Конструктор по умолчанию.
- * \details Инициализирует объект блокировки CLock для синхронизации доступа к ресурсам ADC.
+ * \brief Default constructor.
+ * \details Initializes the object's lock (CLock) for synchronizing access to ADC resources.
  */
 ADCMaster::ADCMaster() : CLock() {}
 
 /**
- * \brief Деструктор.
- * \details В текущей реализации не выполняет действий, так как управление ресурсами
- *          осуществляется через метод free().
+ * \brief Destructor.
+ * \details Does nothing in the current implementation, as resource management
+ *          is handled through the free() method.
  */
 ADCMaster::~ADCMaster() {}
 
 /**
- * \brief Возвращает единственный экземпляр класса (реализация паттерна Singleton).
- * \return Указатель на экземпляр ADCMaster.
+ * \brief Returns the single instance of the class (Singleton pattern implementation).
+ * \return Pointer to the ADCMaster instance.
  */
 ADCMaster *ADCMaster::Instance()
 {
@@ -43,8 +43,8 @@ ADCMaster *ADCMaster::Instance()
 }
 
 /**
- * \brief Освобождает ресурсы ADC и удаляет экземпляр класса.
- * \details Вызывает release() для обоих модулей ADC (0 и 1) перед удалением.
+ * \brief Frees ADC resources and deletes the class instance.
+ * \details Calls release() for both ADC modules (0 and 1) before deletion.
  */
 void ADCMaster::free()
 {
@@ -52,7 +52,7 @@ void ADCMaster::free()
     {
         for (int16_t i = 0; i < 2; i++)
         {
-            theSingleInstance->release((adc_unit_t)i); // Освобождение ресурсов ADC
+            theSingleInstance->release((adc_unit_t)i); // Freeing ADC resources
         }
         delete theSingleInstance;
         theSingleInstance = nullptr;
@@ -60,26 +60,26 @@ void ADCMaster::free()
 }
 
 /**
- * \brief Инициализирует канал ADC для работы.
- * \param adc_num Номер модуля ADC (ADC_UNIT_1 или ADC_UNIT_2).
- * \param channel Номер канала ADC.
- * \return true - успешная инициализация, false - ошибка.
- * \details Если модуль ADC не инициализирован, создает новый юнит.
- *          Настраивает канал с параметрами по умолчанию: 12 бит, затухание 12 дБ.
+ * \brief Initializes an ADC channel for operation.
+ * \param adc_num The ADC module number (ADC_UNIT_1 or ADC_UNIT_2).
+ * \param channel The ADC channel number.
+ * \return true - successful initialization, false - error.
+ * \details If the ADC module is not initialized, it creates a new unit.
+ *          Configures the channel with default parameters: 12 bit, 12 dB attenuation.
  */
 bool ADCMaster::take(adc_unit_t adc_num, adc_channel_t channel)
 {
     esp_err_t err;
 
-    lock(); // Блокировка доступа к ресурсам ADC
+    lock(); // Lock access to ADC resources
 
-    // Инициализация модуля ADC, если он не был инициализирован ранее
+    // Initialize the ADC module if it hasn't been initialized before
     if (m_adc[adc_num].count == 0)
     {
         adc_oneshot_unit_init_cfg_t init_config;
         init_config.unit_id = adc_num;
-        init_config.clk_src = ADC_RTC_CLK_SRC_DEFAULT; // Источник тактирования по умолчанию
-        init_config.ulp_mode = ADC_ULP_MODE_DISABLE;   // Отключение режима для ультра-низкого потребления
+        init_config.clk_src = ADC_RTC_CLK_SRC_DEFAULT; // Default clock source
+        init_config.ulp_mode = ADC_ULP_MODE_DISABLE;   // Disable Ultra-Low Power mode
         err = adc_oneshot_new_unit(&init_config, &m_adc[adc_num].adc_handle);
         if (err != ESP_OK)
         {
@@ -89,36 +89,36 @@ bool ADCMaster::take(adc_unit_t adc_num, adc_channel_t channel)
         }
     }
 
-    // Настройка канала ADC
+    // Configure the ADC channel
     adc_oneshot_chan_cfg_t config;
-    config.bitwidth = ADC_BITWIDTH_DEFAULT; // 12 бит
+    config.bitwidth = ADC_BITWIDTH_DEFAULT; // 12 bits
     config.atten = ADC_ATTEN_DB_12;
     err = adc_oneshot_config_channel(m_adc[adc_num].adc_handle, channel, &config);
     if (err != ESP_OK)
     {
         unlock();
-        ESP_LOGE(TAG, "adc_oneshot_config_channel failed(%d) channel %d в ADC%d", err, (uint16_t)channel, adc_num);
+        ESP_LOGE(TAG, "adc_oneshot_config_channel failed(%d) channel %d in ADC%d", err, (uint16_t)channel, adc_num);
         return false;
     }
 
-    m_adc[adc_num].count++; // Увеличение счетчика использования модуля
+    m_adc[adc_num].count++; // Increment the module usage counter
     unlock();
     return true;
 }
 
-adc_oneshot_unit_handle_t* ADCMaster::take(adc_unit_t adc_num)
+adc_oneshot_unit_handle_t *ADCMaster::take(adc_unit_t adc_num)
 {
     esp_err_t err;
 
-    lock(); // Блокировка доступа к ресурсам ADC
+    lock(); // Lock access to ADC resources
 
-    // Инициализация модуля ADC, если он не был инициализирован ранее
+    // Initialize the ADC module if it hasn't been initialized before
     if (m_adc[adc_num].count == 0)
     {
         adc_oneshot_unit_init_cfg_t init_config;
         init_config.unit_id = adc_num;
-        init_config.clk_src = ADC_RTC_CLK_SRC_DEFAULT; // Источник тактирования по умолчанию
-        init_config.ulp_mode = ADC_ULP_MODE_DISABLE;   // Отключение режима для ультра-низкого потребления
+        init_config.clk_src = ADC_RTC_CLK_SRC_DEFAULT; // Default clock source
+        init_config.ulp_mode = ADC_ULP_MODE_DISABLE;   // Disable Ultra-Low Power mode
         err = adc_oneshot_new_unit(&init_config, &m_adc[adc_num].adc_handle);
         if (err != ESP_OK)
         {
@@ -128,18 +128,18 @@ adc_oneshot_unit_handle_t* ADCMaster::take(adc_unit_t adc_num)
         }
     }
 
-    m_adc[adc_num].count++; // Увеличение счетчика использования модуля
+    m_adc[adc_num].count++; // Increment the module usage counter
     unlock();
     return &(m_adc[adc_num].adc_handle);
 }
 
 /**
- * \brief Читает значение с указанного канала ADC.
- * \param adc_num Номер модуля ADC.
- * \param channel Номер канала ADC.
- * \param[out] value Прочитанное значение (0-4095 для 12 бит).
- * \return true - чтение успешно, false - ошибка.
- * \details При возникновении тайм-аута повторяет попытку чтения.
+ * \brief Reads the value from the specified ADC channel.
+ * \param adc_num The ADC module number.
+ * \param channel The ADC channel number.
+ * \param[out] value The read value (0-4095 for 12 bits).
+ * \return true - read successful, false - error.
+ * \details On timeout, retries the read attempt.
  */
 bool ADCMaster::read(adc_unit_t adc_num, adc_channel_t channel, int &value)
 {
@@ -163,10 +163,10 @@ bool ADCMaster::read(adc_unit_t adc_num, adc_channel_t channel, int &value)
 }
 
 /**
- * \brief Освобождает ресурсы модуля ADC.
- * \param adc_num Номер модуля ADC.
- * \details Уменьшает счетчик использования модуля.
- *          Если счетчик достигает нуля - удаляет юнит ADC.
+ * \brief Frees the resources of the ADC module.
+ * \param adc_num The ADC module number.
+ * \details Decrements the module usage counter.
+ *          If the counter reaches zero, deletes the ADC unit.
  */
 void ADCMaster::release(adc_unit_t adc_num)
 {

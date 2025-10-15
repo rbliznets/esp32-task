@@ -1,9 +1,14 @@
 /*!
 	\file
-	\brief Вывод сообщения об ошибке.
-	\authors Близнец Р.А.(r.bliznets@gmail.com)
+	\brief Error message output.
+	\authors Bliznets R.A.(r.bliznets@gmail.com)
 	\version 1.3.1.0
 	\date 10.07.2020
+	\details This header file defines macros and the CTraceList class for a flexible
+			 logging system. It allows multiple loggers (implementing ITraceLog) to be
+			 registered and called simultaneously for logging messages, errors, data,
+			 and timing information. Macros provide convenient access to the global
+			 traceLog instance.
 */
 
 #pragma once
@@ -20,91 +25,101 @@
 #endif
 
 #ifdef CONFIG_DEBUG_CODE
-/// Вывод лога
+/// Output log message
 /*!
-  \param[in] str Сообщение.
+  \param[in] str Message string.
 */
 #define LOG(str) traceLog.log(str)
-/// Вывод сообщения
+
+/// Output a message (using stopTime for timing context)
 /*!
-  \param[in] str Сообщение std::string.
+  \param[in] str Message std::string.
 */
 #define PRINT(str) traceLog.stopTime(str.c_str(), 1)
-/// Основной метод трассировки
+
+/// Main trace method
 /*!
-	\param[in] str Сообщение об ошибке.
-	\param[in] code Код ошибки.
-	\param[in] reboot Флаг перезагрузки.
+	\param[in] str Error message string.
+	\param[in] code Error code.
+	\param[in] reboot Reboot flag.
 */
 #define TRACE(str, code, reboot) traceLog.trace((char *)str, code, ESP_LOG_INFO, reboot)
 #define TRACE_W(str, code, reboot) traceLog.trace((char *)str, code, ESP_LOG_WARN, reboot)
 #define TRACE_E(str, code, reboot) traceLog.trace((char *)str, code, ESP_LOG_ERROR, reboot)
-/// Вывести значение в десятичном виде
+
+/// Print value in decimal
 /*!
-	\param[in] str Сообщение.
-	\param[in] code значение.
+	\param[in] str Message string.
+	\param[in] code Value to print.
 */
 #define TDEC(str, code) traceLog.trace((char *)str, code, ESP_LOG_INFO, false)
-/// Вывести значение в hex виде
+
+/// Print value in hexadecimal
 /*!
-	\param[in] str Сообщение.
-	\param[in] code значение.
+	\param[in] str Message string.
+	\param[in] code Value to print.
 */
 #define THEX(str, code)             \
 	{                               \
 		auto x = code;              \
 		traceLog.trace(str, &x, 1); \
 	}
-/// Основной метод трассировки из прерывания
+
+/// Main trace method from interrupt
 /*!
-	\param[in] str Сообщение об ошибке.
-	\param[in] code Код ошибки.
-	\param[in|out] pxHigherPriorityTaskWoken Флаг переключения задач.
+	\param[in] str Error message string.
+	\param[in] code Error code.
+	\param[in|out] pxHigherPriorityTaskWoken Task switch flag.
 */
 #define TRACE_FROM_ISR(str, code, pxHigherPriorityTaskWoken) traceLog.traceFromISR((char *)str, code, pxHigherPriorityTaskWoken)
 
-/// Метод трассировки массива данных
+/// Trace data array method
 /*!
-	\param[in] str Сообщение об ошибке.
-	\param[in] data данные.
-	\param[in] size размер данных.
+	\param[in] str Error message string.
+	\param[in] data Pointer to the data array.
+	\param[in] size Size of the data array.
 */
 #define TRACEDATA(str, data, size) traceLog.trace(str, data, size)
 
-/// Старт секундомера
+/// Start stopwatch
 #define STARTTIMESHOT() traceLog.startTime()
-/// Фиксация времени секундомера
+
+/// Record stopwatch time
 /*!
-	\param[in] str Сообщение.
+	\param[in] str Message string.
 */
 #define STOPTIMESHOT(str) traceLog.stopTime(str, 1)
-/// Вывести интервал времени
+
+/// Print time interval
 /*!
-	\param[in] str название интервала.
-	\param[in] N количество для усреднения.
+	\param[in] str Name of the interval.
+	\param[in] N Number for averaging.
 */
 #define STOPTIME(str, N) traceLog.stopTime(str, N)
 
-/// Добавить трассировщика
+/// Add a tracer
 /*!
-	\param[in] log трассировщик
+	\param[in] log Tracer object (ITraceLog*).
 */
 #define ADDLOG(log) traceLog.add(log)
-/// Убрать трассировщика
+
+/// Remove a tracer
 /*!
-	\param[in] log трассировщик
+	\param[in] log Tracer object (ITraceLog*).
 */
 #define REMOVELOG(log) traceLog.remove(log)
-/// Очистить список
+
+/// Clear the list of tracers
 #define CLEARLOGS() traceLog.clear();
 
+/// Initialize trace system
 #define INIT_TRACE() traceLog.init();
 
 #ifdef CONFIG_COMPILER_CXX_RTTI
-/// Вывод ошибки из метода класса.
+/// Print error from a class method.
 /*!
-	\param[in] str Сообщение об ошибке.
-	\param[in] x Код ошибки.
+	\param[in] s Error message string.
+	\param[in] x Error code.
 */
 #define TRACE_ERROR(s, x)                                       \
 	{                                                           \
@@ -113,10 +128,11 @@
 		else                                                    \
 			traceLog.trace((char *)s, x, ESP_LOG_ERROR, false); \
 	}
-/// Вывод предупреждения из метода класса.
+
+/// Print warning from a class method.
 /*!
-	\param[in] str Сообщение об ошибке.
-	\param[in] x Код ошибки.
+	\param[in] s Error message string.
+	\param[in] x Error code.
 */
 #define TRACE_WARNING(s, x)                                    \
 	{                                                          \
@@ -126,10 +142,10 @@
 			traceLog.trace((char *)s, x, ESP_LOG_WARN, false); \
 	}
 #else
-/// Вывод ошибки из метода класса.
+/// Print error from a class method.
 /*!
-	\param[in] str Сообщение об ошибке.
-	\param[in] x Код ошибки.
+	\param[in] s Error message string.
+	\param[in] x Error code.
 */
 #define TRACE_ERROR(s, x)                                       \
 	{                                                           \
@@ -138,27 +154,30 @@
 		else                                                    \
 			traceLog.trace((char *)s, x, ESP_LOG_ERROR, false); \
 	}
-/// Вывод предупреждения из метода класса.
+
+/// Print warning from a class method.
 /*!
-	\param[in] str Сообщение об ошибке.
-	\param[in] x Код ошибки.
+	\param[in] s Error message string.
+	\param[in] x Error code.
 */
-#define TRACE_WARNING(s, x)                                     \
-	{                                                           \
-		if (std::is_base_of_v<ITraceLog, typeof(*this)>)        \
-			ESP_LOGW("Trace", "%s: %d", s, x);                  \
-		else                                                    \
+#define TRACE_WARNING(s, x)                                    \
+	{                                                          \
+		if (std::is_base_of_v<ITraceLog, typeof(*this)>)       \
+			ESP_LOGW("Trace", "%s: %d", s, x);                 \
+		else                                                   \
 			traceLog.trace((char *)s, x, ESP_LOG_WARN, false); \
 	}
 #endif
 
-#else
+#else // CONFIG_DEBUG_CODE is not defined
+
+// Define empty macros if debugging is disabled
 #define LOG(str)
 #define PRINT(str)
 
 #define TRACE(str, code, reboot)
 #define TRACE_W(str, code, reboot)
-#define TRACE_E(str, code, reboot) 
+#define TRACE_E(str, code, reboot)
 #define TDEC(str, code)
 #define THEX(str, code)
 #define TRACE_FROM_ISR(str, code, pxHigherPriorityTaskWoken)
@@ -175,138 +194,161 @@
 #define INIT_TRACE()
 
 #ifdef CONFIG_COMPILER_CXX_RTTI
-/// Вывод ошибки из метода класса.
+/// Print error from a class method (when global tracing is disabled).
 /*!
-	\param[in] str Сообщение об ошибке.
-	\param[in] x Код ошибки.
+	\param[in] s Error message string.
+	\param[in] x Error code.
 */
 #define TRACE_ERROR(s, x) ESP_LOGE(typeid(*this).name(), "%s: %d", s, x)
-/// Вывод предупреждения из метода класса.
+
+/// Print warning from a class method (when global tracing is disabled).
 /*!
-	\param[in] str Сообщение об ошибке.
-	\param[in] x Код ошибки.
+	\param[in] s Error message string.
+	\param[in] x Error code.
 */
 #define TRACE_WARNING(s, x) ESP_LOGW(typeid(*this).name(), "%s: %d", s, x)
 #else
-/// Вывод ошибки из метода класса.
+/// Print error from a class method (when global tracing is disabled).
 /*!
-	\param[in] str Сообщение об ошибке.
-	\param[in] x Код ошибки.
+	\param[in] s Error message string.
+	\param[in] x Error code.
 */
 #define TRACE_ERROR(s, x) ESP_LOGE("Trace", "%s: %d", s, x)
-/// Вывод предупреждения из метода класса.
+
+/// Print warning from a class method (when global tracing is disabled).
 /*!
-	\param[in] str Сообщение об ошибке.
-	\param[in] x Код ошибки.
+	\param[in] s Error message string.
+	\param[in] x Error code.
 */
 #define TRACE_WARNING(s, x) ESP_LOGW("Trace", "%s: %d", s, x)
 #endif
-#endif
+#endif // CONFIG_DEBUG_CODE
 
-/// Класс списка зарегистрированных трассировщиков
+/// Class for the list of registered tracers/loggers
+/// @details This class aggregates multiple ITraceLog implementations. When a logging
+///          method is called on CTraceList, it iterates through its internal list
+///          and calls the corresponding method on each registered ITraceLog object.
+///          It inherits from CLock to provide thread safety for the internal list
+///          operations and iteration.
 class CTraceList : public ITraceLog, public CLock
 {
 protected:
-	std::list<ITraceLog *> m_list; ///< Список зарегестрированных трассировщиков
+	/// List of registered tracer/loggers (pointers to ITraceLog).
+	std::list<ITraceLog *> m_list;
 
 public:
-	/// Конструктор
+	/// Constructor
+	/// @details Initializes base classes ITraceLog and CLock.
+	///          Creates the mutex (mMutex) via CLock.
 	CTraceList();
-	/// Деструктор
+
+	/// Destructor
+	/// @details Virtual destructor.
 	virtual ~CTraceList();
 
-	/// Начальная инициализация по умолчанию
+	/// Initial default setup
+	/// @details Adds default loggers (like CPrintLog or CTraceTask) based on
+	///          compile-time configuration flags.
 	void init();
 
-	/// Виртуальный метод трассировки
+	/// Virtual trace method
 	/*!
-	  \param[in] strError Сообщение об ошибке.
-	  \param[in] errCode Код ошибки.
-	  \param[in] level Уровень вывода сообщения.
-	  \param[in] reboot Флаг перезагрузки.
+	  \param[in] strError Error message string.
+	  \param[in] errCode Error code.
+	  \param[in] level Log level (e.g., ESP_LOG_INFO, ESP_LOG_WARN).
+	  \param[in] reboot Reboot flag.
 	*/
 	virtual void trace(const char *strError, int32_t errCode, esp_log_level_t level, bool reboot) override;
-	/// Виртуальный метод трассировки из прерывания.
+
+	/// Virtual trace method from interrupt.
 	/*!
-	  \param[in] strError Сообщение об ошибке.
-	  \param[in] errCode Код ошибки.
-	  \param[in|out] pxHigherPriorityTaskWoken Флаг переключения задач.
+	  \param[in] strError Error message string.
+	  \param[in] errCode Error code.
+	  \param[in|out] pxHigherPriorityTaskWoken Task switch flag.
 	*/
 	virtual void traceFromISR(const char *strError, int16_t errCode, BaseType_t *pxHigherPriorityTaskWoken) override;
 
-	/// Виртуальный метод массива данных
+	/// Virtual data array trace method
 	/*!
-	  \param[in] strError Сообщение об ошибке.
-	  \param[in] data данные.
-	  \param[in] size размер данных.
+	  \param[in] strError Error message string.
+	  \param[in] data Pointer to the data array.
+	  \param[in] size Size of the data array.
 	*/
 	virtual void trace(const char *strError, uint8_t *data, uint32_t size) override;
-	/// Виртуальный метод массива данных
+
+	/// Virtual data array trace method
 	/*!
-	  \param[in] strError Сообщение об ошибке.
-	  \param[in] data данные.
-	  \param[in] size размер данных.
+	  \param[in] strError Error message string.
+	  \param[in] data Pointer to the data array.
+	  \param[in] size Size of the data array.
 	*/
 	virtual void trace(const char *strError, int8_t *data, uint32_t size) override;
-	/// Виртуальный метод массива данных
+
+	/// Virtual data array trace method
 	/*!
-	  \param[in] strError Сообщение об ошибке.
-	  \param[in] data данные.
-	  \param[in] size размер данных.
+	  \param[in] strError Error message string.
+	  \param[in] data Pointer to the data array.
+	  \param[in] size Size of the data array.
 	*/
 	virtual void trace(const char *strError, uint16_t *data, uint32_t size) override;
-	/// Виртуальный метод массива данных
+
+	/// Virtual data array trace method
 	/*!
-	  \param[in] strError Сообщение об ошибке.
-	  \param[in] data данные.
-	  \param[in] size размер данных.
+	  \param[in] strError Error message string.
+	  \param[in] data Pointer to the data array.
+	  \param[in] size Size of the data array.
 	*/
 	virtual void trace(const char *strError, int16_t *data, uint32_t size) override;
-	/// Виртуальный метод массива данных
+
+	/// Virtual data array trace method
 	/*!
-	  \param[in] strError Сообщение об ошибке.
-	  \param[in] data данные.
-	  \param[in] size размер данных.
+	  \param[in] strError Error message string.
+	  \param[in] data Pointer to the data array.
+	  \param[in] size Size of the data array.
 	*/
 	virtual void trace(const char *strError, uint32_t *data, uint32_t size) override;
-	/// Виртуальный метод массива данных
+
+	/// Virtual data array trace method
 	/*!
-	  \param[in] strError Сообщение об ошибке.
-	  \param[in] data данные.
-	  \param[in] size размер данных.
+	  \param[in] strError Error message string.
+	  \param[in] data Pointer to the data array.
+	  \param[in] size Size of the data array.
 	*/
 	virtual void trace(const char *strError, int32_t *data, uint32_t size) override;
 
-	/// Вывести сообщение
+	/// Print a message
 	/*!
-	  \param[in] str Сообщение.
+	  \param[in] str Message string.
 	*/
 	virtual void log(const char *str) override;
 
-	/// Обнулить метку времени
+	/// Reset the time marker
 	virtual void startTime() override;
-	/// Вывести интервал времени
+
+	/// Print the time interval
 	/*!
-	  \param[in] str название интервала.
-	  \param[in] n количество для усреднения.
+	  \param[in] str Name of the interval.
+	  \param[in] n Number for averaging (default 1).
 	*/
 	virtual void stopTime(const char *str, uint32_t n = 1) override;
 
-	/// Добавить трассировщик в список
+	/// Add a tracer to the list
 	/*!
-	  \param[in] log трассировщик
+	  \param[in] log Tracer object (ITraceLog*).
 	*/
 	void add(ITraceLog *log);
-	/// Удалить трассировщика из списка
+
+	/// Remove a tracer from the list
 	/*!
-	  \param[in] log трассировщик
+	  \param[in] log Tracer object (ITraceLog*) to remove.
 	*/
 	void remove(ITraceLog *log);
-	/// Очистить список
+
+	/// Clear the list of tracers
 	void clear();
 };
 
 #ifdef CONFIG_DEBUG_CODE
-extern CTraceList traceLog; ///< Объект глобального списка зарегистрированных трассировщиков
+/// Global instance of the list of registered tracers/loggers.
+extern CTraceList traceLog;
 #endif
-

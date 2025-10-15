@@ -1,92 +1,107 @@
 /*!
 	\file
-	\brief Программный таймер под задачи FreeRTOS.
-    \authors Близнец Р.А. (r.bliznets@gmail.com)
+	\brief Software timer for FreeRTOS tasks.
+	\authors Bliznets R.A. (r.bliznets@gmail.com)
 	\version 1.2.0.0
 	\date 28.04.2020
+	\details This header file defines the CSoftwareTimer class, which wraps FreeRTOS
+			 software timers (TimerHandle_t) to provide a mechanism for triggering
+			 actions in FreeRTOS tasks after a specified time period. It supports
+			 notifying the task directly or sending a message via a CBaseTask's queue.
 */
 
 #pragma once
 
-#include "CBaseTask.h"
-#include "freertos/timers.h"
-#include "esp_pm.h"
+#include "CBaseTask.h"		 // Include header for CBaseTask (used for message sending)
+#include "freertos/timers.h" // Include FreeRTOS timer header
+#include "esp_pm.h"			 // Include ESP-IDF power management header (currently commented out)
 
-/// Метод сообщения от таймера.
+/// Method for the timer to communicate its event.
+/// @details Defines how the timer signals its expiration to the target task.
 enum class ETimerEvent
 {
-	Notify,	 ///< Через notify.
-	SendBack, ///< Через очередь.
-	SendFront ///< Через очередь.
+	Notify,	  ///< Notify the task using FreeRTOS task notifications.
+	SendBack, ///< Send a message to the back of the task's queue (CBaseTask).
+	SendFront ///< Send a message to the front of the task's queue (CBaseTask).
 };
 
-/// Программный таймер под задачи FreeRTOS.
+/// Software timer for FreeRTOS tasks.
+/// @details This class encapsulates a FreeRTOS software timer. It allows configuring
+///          the timer to either notify a task using a specific bit or send a command
+///          message to a CBaseTask-derived task upon expiration. It supports both
+///          one-shot and auto-reload modes.
 class CSoftwareTimer
 {
 protected:
-// #if CONFIG_PM_ENABLE
-// 	esp_pm_lock_handle_t mPMLock; ///< флаг запрета на sleep
-// #endif
-	TimerHandle_t mTimerHandle = nullptr; ///< Хэндлер таймера FreeRTOS.
-	uint8_t mNotifyBit;					  ///< Номер бита для оповещения задачи о событии таймера (не более 31).
-	uint16_t mTimerCmd;					  ///< Номер команды для оповещения задачи о событии таймера (не более 31).
+	// #if CONFIG_PM_ENABLE
+	// 	esp_pm_lock_handle_t mPMLock; ///< Flag to prevent sleep mode (currently commented out)
+	// #endif
 
-	TaskHandle_t mTaskToNotify; ///< Указатель на задачу, ожидающую события от таймера.
-	CBaseTask *mTask = nullptr; ///< Указатель на задачу, ожидающую события от таймера.
-	ETimerEvent mEventType;		///< Метод сообщения.
+	/// FreeRTOS timer handle for this instance.
+	TimerHandle_t mTimerHandle = nullptr;
 
-	/// Обработчик события таймера.
-	/*!
-	\param[in] xTimer Хэндлер таймера FreeRTOS.
-	*/
+	/// Notification bit number (0-31) used to notify the task about the timer event.
+	uint8_t mNotifyBit;
+
+	/// Command ID number used when sending a message to notify the task about the timer event.
+	uint16_t mTimerCmd;
+
+	/// Task handle for the task to be notified upon timer expiration.
+	TaskHandle_t mTaskToNotify;
+
+	/// Pointer to the CBaseTask instance to which a message will be sent upon timer expiration.
+	CBaseTask *mTask = nullptr;
+
+	/// Specifies the method of communication upon timer expiration (Notify, SendBack, SendFront).
+	ETimerEvent mEventType;
+
+	/// Timer event handler callback.
+	/// @details This static function is registered with the FreeRTOS timer system.
+	///          It calls the `timer()` method on the associated CSoftwareTimer object.
+	/// @param[in] xTimer The FreeRTOS TimerHandle_t that expired.
 	static void vTimerCallback(TimerHandle_t xTimer);
 
-	/// Функция, вызываемая по событию в таймере.
+	/// Function called when a timer event occurs.
+	/// @details Handles sending the notification or message based on `mEventType`.
 	inline void timer();
 
 public:
-	/// Конструктор.
-	/*!
-	  \param[in] xNotifyBit Номер бита для оповещения задачи о событии таймера.
-	  \param[in] timerCmd Номер команды для оповещения задачи о событии таймера.
-	*/
+	/// Constructor.
+	/// @details Creates the underlying FreeRTOS timer with default settings.
+	/// @param[in] xNotifyBit Notification bit number (0-31) for task notifications.
+	/// @param[in] timerCmd Command ID number used when sending messages (default 10000).
 	CSoftwareTimer(uint8_t xNotifyBit, uint16_t timerCmd = 10000);
-	/// Деструктор.
+
+	/// Destructor.
+	/// @details Stops and deletes the underlying FreeRTOS timer.
 	~CSoftwareTimer();
 
-	/// Запуск таймера (событие через notify).
-	/*!
-	  \warning Вызывать только из задачи FreeRTOS.
-	  \param[in] period Период в миллисекундах.
-	  \param[in] autoRefresh Флаг автозагрузки таймера. Если false, то таймер запускается один раз.
-	  \return 0 - в случае успеха.
-	  \sa Stop()
-	*/
+	/// Start the timer (event via task notification).
+	/// @warning Must be called only from a FreeRTOS task.
+	/// @param[in] period Period in milliseconds.
+	/// @param[in] autoRefresh Flag for timer auto-reload. If false, the timer runs once.
+	/// @return 0 on success, negative value on error.
+	/// @sa stop()
 	int start(uint32_t period, bool autoRefresh = false);
-	/// Запуск таймера.
-	/*!
-	  \param[in] task Задача для сообщений таймера
-	  \param[in] event Тип сообщения
-	  \param[in] period Период в миллисекундах.
-	  \param[in] autoRefresh Флаг автозагрузки таймера. Если false, то таймер запускается один раз.
-	  \return 0 - в случае успеха.
-	  \sa Stop()
-	*/
+
+	/// Start the timer (event via message to CBaseTask).
+	/// @param[in] task Pointer to the CBaseTask to receive the message.
+	/// @param[in] event Type of event (Notify, SendBack, SendFront).
+	/// @param[in] period Period in milliseconds.
+	/// @param[in] autoRefresh Flag for timer auto-reload. If false, the timer runs once.
+	/// @return 0 on success, negative value on error.
+	/// @sa stop()
 	int start(CBaseTask *task, ETimerEvent event, uint32_t period, bool autoRefresh = false);
-	/// Остановка таймера.
-	/*!
-	  \return 0 - в случае успеха.
-	  \sa Start()
-	*/
+
+	/// Stop the timer.
+	/// @return 0 on success, negative value on error.
+	/// @sa start()
 	int stop();
 
-	/// Состояние таймера.
-	/*!
-	  \return Состояние таймера.
-	*/
+	/// Check if the timer is running.
+	/// @return true if the timer is active (running), false otherwise.
 	inline bool isRun()
 	{
 		return xTimerIsTimerActive(mTimerHandle) == pdTRUE;
 	};
 };
-
