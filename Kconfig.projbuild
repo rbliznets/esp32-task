@@ -46,7 +46,7 @@ menu "Tasks"
     choice
         depends on !DEBUG_TRACE_NONE && DEBUG_CODE
         prompt "Choose the method of print"
-        default DEBUG_TRACE_ESPLOG
+        default DEBUG_TRACE_PRINTF
 
         config DEBUG_TRACE_PRINTF
             bool "printf"

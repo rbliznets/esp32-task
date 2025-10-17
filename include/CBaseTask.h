@@ -16,6 +16,8 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
+#define MSG_END_TASK (0)        ///< Force task termination
+
 /// Structure representing a message passed between tasks.
 /// It uses a union to allow different interpretations of the data payload.
 struct STaskMessage
