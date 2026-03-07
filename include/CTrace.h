@@ -131,8 +131,7 @@
 	{                                                           \
 		if (std::is_base_of_v<ITraceLog, typeof(*this)>)        \
 			ESP_LOGE(typeid(*this).name(), "%s: %d", s, x);     \
-		else                                                    \
-			traceLog.trace((char *)s, x, ESP_LOG_ERROR, false); \
+		traceLog.trace((char *)s, x, ESP_LOG_ERROR, false); \
 	}
 
 /// Print warning from a class method using RTTI for the logger name.
@@ -144,8 +143,7 @@
 	{                                                          \
 		if (std::is_base_of_v<ITraceLog, typeof(*this)>)       \
 			ESP_LOGW(typeid(*this).name(), "%s: %d", s, x);    \
-		else                                                   \
-			traceLog.trace((char *)s, x, ESP_LOG_WARN, false); \
+		traceLog.trace((char *)s, x, ESP_LOG_WARN, false); \
 	}
 #else
 /// Print error from a class method without RTTI, uses a generic name.
@@ -157,8 +155,7 @@
 	{                                                           \
 		if (std::is_base_of_v<ITraceLog, typeof(*this)>)        \
 			ESP_LOGE("Trace", "%s: %d", s, x);                  \
-		else                                                    \
-			traceLog.trace((char *)s, x, ESP_LOG_ERROR, false); \
+		traceLog.trace((char *)s, x, ESP_LOG_ERROR, false); \
 	}
 
 /// Print warning from a class method without RTTI, uses a generic name.
@@ -170,8 +167,7 @@
 	{                                                          \
 		if (std::is_base_of_v<ITraceLog, typeof(*this)>)       \
 			ESP_LOGW("Trace", "%s: %d", s, x);                 \
-		else                                                   \
-			traceLog.trace((char *)s, x, ESP_LOG_WARN, false); \
+		traceLog.trace((char *)s, x, ESP_LOG_WARN, false); \
 	}
 #endif
 
