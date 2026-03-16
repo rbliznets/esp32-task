@@ -15,11 +15,31 @@
 // It's assumed that the mutex (mMutex) will be initialized elsewhere,
 // potentially in a derived class constructor or during object creation,
 // before `lock()` or `unlock()` are called.
-CLock::CLock()
+CLock::CLock(bool internal):mInternal(internal)
 {
-	// The member variable mMutex is expected to be initialized by the derived class
-	// or by the code creating the instance.
+	if(mInternal)
+	{
+		mMutex = xSemaphoreCreateMutex();
+	}
 }
+
+CLock::~CLock()
+{
+	if(mInternal)
+	{
+		vSemaphoreDelete( mMutex );
+	}
+}
+
+void CLock::init(SemaphoreHandle_t mutex)
+{
+	if(mInternal)
+	{
+		vSemaphoreDelete( mMutex );
+		mInternal = false;
+	}
+	mMutex = mutex;
+};
 
 // The lock() method is used to lock access to a shared resource.
 // If the mutex (mMutex) was successfully created and is not nullptr,

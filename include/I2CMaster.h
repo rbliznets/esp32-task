@@ -52,7 +52,7 @@ protected:
     /// @brief Private destructor.
     /// @details Made private to control deletion. Resources should be freed using the static free() method.
     ///          The free() method calls release() on all buses and then deletes the instance.
-    ~I2CMaster();
+    virtual ~I2CMaster();
 
 public:
     /// @brief  Get the single instance of the I2CMaster class.

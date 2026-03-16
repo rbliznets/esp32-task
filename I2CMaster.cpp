@@ -18,7 +18,7 @@ static const char *TAG = "I2CMaster"; // Tag for logging
 I2CMaster *I2CMaster::theSingleInstance = nullptr; // The single instance of the class
 
 // Default constructor
-I2CMaster::I2CMaster() : CLock() // Initialize the base lock class
+I2CMaster::I2CMaster() : CLock(true) // Initialize the base lock class
 {
 }
 
