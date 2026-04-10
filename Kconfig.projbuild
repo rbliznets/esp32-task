@@ -6,6 +6,10 @@ menu "Tasks"
         help
             Info to console.
 
+    config FORCE_DEBUG_NONE
+        bool
+        default n
+
     choice
         depends on DEBUG_CODE
         prompt "Choose default tracing"
@@ -20,11 +24,13 @@ menu "Tasks"
 
         config DEBUG_TRACE_PRINT
             bool "Print"
+            depends on !FORCE_DEBUG_NONE
             help
                 Imidiately print tracing messages.
 
         config DEBUG_TRACE_TASK
             bool "Print from task"
+            depends on !FORCE_DEBUG_NONE
             help
                 Print tracing messages from the task.
 
