@@ -29,7 +29,7 @@ CDelayTimer::CDelayTimer(uint8_t xNotifyBit, uint16_t timerCmd) : mNotifyBit(xNo
 		.direction = GPTIMER_COUNT_UP,		// Count up
 		.resolution_hz = 1000000,			// Frequency 1 MHz (1 tick = 1 microsecond)
 		.intr_priority = 0,					// Interrupt priority
-		.flags = {1, 0, 0}					// Configuration flags
+		.flags = {1, 0}						// Configuration flags
 	};
 
 	// Register the callback function for handling timer events
