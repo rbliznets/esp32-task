@@ -30,10 +30,16 @@ void CBaseTask::vTask(void *pvParameters)
 	((CBaseTask *)pvParameters)->mTaskQueue = nullptr;
 
 #if (INCLUDE_vTaskDelete == 1)
-	// If task deletion is supported by FreeRTOS, log exit and delete the task.
+	// Не самоудаляемся: vTaskDelete(nullptr) освобождает TCB и стек лишь на
+	// следующем такте idle-задачи (а не синхронно), из-за чего ~CBaseTask()
+	// не может гарантировать, что память уже возвращена в кучу к моменту
+	// своего возврата, и рискует словить гонку с этим отложенным
+	// самоудалением (двойной vTaskDelete одной и той же задачи).
+	// Вместо этого замираем и ждём, пока задачу удалят извне через
+	// vTaskDelete(mTaskHandle) - такое удаление "снаружи" освобождает
+	// TCB и стек синхронно, до возврата из самого вызова.
 	ESP_LOGD(pcTaskGetName(((CBaseTask *)pvParameters)->mTaskHandle), "exit");
-	((CBaseTask *)pvParameters)->mTaskHandle = nullptr;
-	vTaskDelete(nullptr); // Delete the currently running task.
+	vTaskSuspend(nullptr);
 #else
 	// If task deletion is not supported, the task enters an infinite loop.
 	for (;;)
@@ -53,8 +59,19 @@ CBaseTask::~CBaseTask()
 		if (mTaskQueue != nullptr)
 			vQueueDelete(mTaskQueue);
 
-		// Delete the FreeRTOS task itself.
+		// Задача уже приостановлена в vTask() (см. комментарий там) и ждёт
+		// удаления извне. Задачи, созданные через xTaskCreatePinnedToCoreWithCaps()
+		// (см. init(), ветка CONFIG_SPIRAM), используют статическое выделение под
+		// капотом - обычный vTaskDelete() их TCB/стек вообще не освобождает,
+		// нужен именно vTaskDeleteWithCaps() (он сам делает heap_caps_free()/
+		// vPortFree() после удаления). Иначе вызывает молчаливую утечку стека
+		// на каждое пересоздание задачи.
+#ifdef CONFIG_SPIRAM
+		vTaskDeleteWithCaps(mTaskHandle);
+#else
 		vTaskDelete(mTaskHandle);
+#endif
+		mTaskHandle = nullptr;
 	}
 #endif
 }
