@@ -61,7 +61,7 @@ CBaseTask::~CBaseTask()
 
 // Initializes the task by creating the message queue and starting the task in the FreeRTOS scheduler.
 // Pins the task to the specified CPU core.
-void CBaseTask::init(const char *name, unsigned short usStack, UBaseType_t uxPriority, UBaseType_t queueLength, BaseType_t coreID)
+void CBaseTask::init(const char *name, unsigned short usStack, UBaseType_t uxPriority, UBaseType_t queueLength, BaseType_t coreID, bool psram)
 {
 	// Validate input parameters against FreeRTOS configuration limits.
 	assert(uxPriority <= configMAX_PRIORITIES);
@@ -71,8 +71,21 @@ void CBaseTask::init(const char *name, unsigned short usStack, UBaseType_t uxPri
 	// Create the FreeRTOS queue for task messages.
 	mTaskQueue = xQueueCreate(queueLength, sizeof(STaskMessage));
 
+#ifdef CONFIG_SPIRAM
+	if (psram)
+	{
+		// Create the FreeRTOS task pinned to the specified core, using PSRAM for the stack.
+		xTaskCreatePinnedToCoreWithCaps(vTask, name, usStack, this, uxPriority, &mTaskHandle, coreID, MALLOC_CAP_SPIRAM);
+	}
+	else
+	{
+		// Create the FreeRTOS task pinned to the specified core, using standard heap for the stack.
+		xTaskCreatePinnedToCoreWithCaps(vTask, name, usStack, this, uxPriority, &mTaskHandle, coreID, MALLOC_CAP_INTERNAL);
+	}	 
+#else
 	// Create the FreeRTOS task, pin it to the specified core, and store its handle.
 	xTaskCreatePinnedToCore(vTask, name, usStack, this, uxPriority, &mTaskHandle, coreID);
+#endif
 }
 
 // Sends a message to the end of the task's queue.

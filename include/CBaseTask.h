@@ -84,7 +84,8 @@ public:
 	/// @param[in] uxPriority Priority of the task (must be less than configMAX_PRIORITIES).
 	/// @param[in] queueLength Maximum length of the message queue.
 	/// @param[in] coreID CPU core ID to pin the task to (0, 1, or tskNO_AFFINITY for no affinity).
-	void init(const char *name, unsigned short usStack, UBaseType_t uxPriority, UBaseType_t queueLength, BaseType_t coreID = tskNO_AFFINITY);
+	/// @param[in] psram If true, allocates the task stack in PSRAM.
+	void init(const char *name, unsigned short usStack, UBaseType_t uxPriority, UBaseType_t queueLength, BaseType_t coreID = tskNO_AFFINITY, bool psram = false);
 
 	/// Destructor.
 	/// @details Ensures the associated FreeRTOS task and queue are cleaned up if possible.

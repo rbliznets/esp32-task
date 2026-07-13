@@ -14,16 +14,65 @@
 #include <cstdio>
 #include "CTrace.h"
 
+// Реестр живых таймеров. xTimerStop/xTimerDelete - асинхронные команды демону
+// таймеров (Tmr Svc): при удалении объекта C++ колбэк истёкшего таймера может
+// выполниться позже (и на другом ядре) с висячим pvTimerID. До фикса это
+// приводило к периодической порче кучи под нагрузкой (WiFi scan): демон с
+// приоритетом 1 голодал, команды stop/delete с таймаутом 1 тик не вставали в
+// очередь (код возврата игнорировался), а "живой" таймер стрелял по
+// освобождённой памяти.
+static CSoftwareTimer *sAliveTimers[64];
+static portMUX_TYPE sAliveMux = portMUX_INITIALIZER_UNLOCKED;
+
+static void alive_add(CSoftwareTimer *t)
+{
+	portENTER_CRITICAL(&sAliveMux);
+	for (auto &slot : sAliveTimers)
+	{
+		if (slot == nullptr)
+		{
+			slot = t;
+			break;
+		}
+	}
+	portEXIT_CRITICAL(&sAliveMux);
+}
+
+static void alive_remove(CSoftwareTimer *t)
+{
+	portENTER_CRITICAL(&sAliveMux);
+	for (auto &slot : sAliveTimers)
+	{
+		if (slot == t)
+		{
+			slot = nullptr;
+			break;
+		}
+	}
+	portEXIT_CRITICAL(&sAliveMux);
+}
+
+static bool alive_check(CSoftwareTimer *t)
+{
+	bool res = false;
+	portENTER_CRITICAL(&sAliveMux);
+	for (auto &slot : sAliveTimers)
+	{
+		if (slot == t)
+		{
+			res = true;
+			break;
+		}
+	}
+	portEXIT_CRITICAL(&sAliveMux);
+	return res;
+}
+
 // Constructor for the CSoftwareTimer class
 CSoftwareTimer::CSoftwareTimer(uint8_t xNotifyBit, uint16_t timerCmd)
 {
 	// Verify that the notification bit number is less than 32 (as it's used in a bitmask)
 	assert(xNotifyBit < 32);
-
-	// If power management support is enabled, create a lock to prevent light sleep mode
-	// #if CONFIG_PM_ENABLE
-	// 	esp_pm_lock_create(ESP_PM_NO_LIGHT_SLEEP, 0, "st", &mPMLock);
-	// #endif
 
 	// Initialize class members
 	mNotifyBit = xNotifyBit;
@@ -35,7 +84,13 @@ CSoftwareTimer::CSoftwareTimer(uint8_t xNotifyBit, uint16_t timerCmd)
 
 	// Check if the timer was created successfully
 	if (mTimerHandle == nullptr)
+	{
 		TRACE_ERROR("CSoftwareTimer has not created", -1);
+	}
+	else
+	{
+		alive_add(this);
+	}
 }
 
 // Destructor for the CSoftwareTimer class
@@ -44,14 +99,17 @@ CSoftwareTimer::~CSoftwareTimer()
 	// If the timer was created, stop and delete it
 	if (mTimerHandle != nullptr)
 	{
-		stop();
-		xTimerDelete(mTimerHandle, 1);
+		// Сначала выводим себя из реестра: колбэк, который демон уже держит
+		// в работе, увидит это и не тронет объект.
+		alive_remove(this);
+		// Команды демону ставим в очередь с бесконечным ожиданием: таймаут в
+		// 1 тик при полной очереди команд оставлял таймер живым навсегда.
+		while (xTimerStop(mTimerHandle, portMAX_DELAY) != pdPASS)
+			vTaskDelay(1);
+		while (xTimerDelete(mTimerHandle, portMAX_DELAY) != pdPASS)
+			vTaskDelay(1);
+		mTimerHandle = nullptr;
 	}
-
-	// Delete the power management lock if it was created
-	// #if CONFIG_PM_ENABLE
-	// 	esp_pm_lock_delete(mPMLock);
-	// #endif
 }
 
 // Timer callback function (executed when the timer expires)
@@ -59,6 +117,11 @@ void CSoftwareTimer::vTimerCallback(TimerHandle_t xTimer)
 {
 	// Get the pointer to the CSoftwareTimer object from the timer's ID data
 	CSoftwareTimer *tm = (CSoftwareTimer *)pvTimerGetTimerID(xTimer);
+
+	// Объект мог быть удалён между истечением таймера и вызовом колбэка -
+	// проверяем по реестру живых таймеров, прежде чем разыменовывать.
+	if (!alive_check(tm))
+		return;
 
 	// Call the timer() method on the CSoftwareTimer object
 	tm->timer();
