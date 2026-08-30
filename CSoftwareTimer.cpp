@@ -23,6 +23,12 @@
 // освобождённой памяти.
 static CSoftwareTimer *sAliveTimers[64];
 static portMUX_TYPE sAliveMux = portMUX_INITIALIZER_UNLOCKED;
+// Объект, чей колбэк демон таймеров выполняет прямо сейчас. Демон один на систему,
+// поэтому одного указателя достаточно. Нужен, чтобы деструктор дождался выхода из
+// уже начатого колбэка: одной проверки по реестру мало - между проверкой и вызовом
+// tm->timer() объект может быть удалён на другом ядре (демон Tmr Svc прибит к CPU0,
+// задачи bt/logic - к CPU1), и колбэк уйдёт по освобождённой памяти.
+static CSoftwareTimer *sRunningCallback = nullptr;
 
 static void alive_add(CSoftwareTimer *t)
 {
@@ -52,7 +58,10 @@ static void alive_remove(CSoftwareTimer *t)
 	portEXIT_CRITICAL(&sAliveMux);
 }
 
-static bool alive_check(CSoftwareTimer *t)
+/// Пометить объект как занятый колбэком, если он ещё жив.
+/// Проверка реестра и пометка выполняются атомарно - иначе деструктор,
+/// стартовавший между ними, не узнает о колбэке в работе.
+static bool alive_enter_callback(CSoftwareTimer *t)
 {
 	bool res = false;
 	portENTER_CRITICAL(&sAliveMux);
@@ -61,9 +70,25 @@ static bool alive_check(CSoftwareTimer *t)
 		if (slot == t)
 		{
 			res = true;
+			sRunningCallback = t;
 			break;
 		}
 	}
+	portEXIT_CRITICAL(&sAliveMux);
+	return res;
+}
+
+static void alive_exit_callback()
+{
+	portENTER_CRITICAL(&sAliveMux);
+	sRunningCallback = nullptr;
+	portEXIT_CRITICAL(&sAliveMux);
+}
+
+static bool alive_in_callback(CSoftwareTimer *t)
+{
+	portENTER_CRITICAL(&sAliveMux);
+	bool res = (sRunningCallback == t);
 	portEXIT_CRITICAL(&sAliveMux);
 	return res;
 }
@@ -99,9 +124,20 @@ CSoftwareTimer::~CSoftwareTimer()
 	// If the timer was created, stop and delete it
 	if (mTimerHandle != nullptr)
 	{
-		// Сначала выводим себя из реестра: колбэк, который демон уже держит
-		// в работе, увидит это и не тронет объект.
+		// Сначала выводим себя из реестра: новый колбэк по этому объекту уже
+		// не стартует.
 		alive_remove(this);
+		// Колбэк мог начаться до alive_remove() - тогда демон прямо сейчас
+		// находится внутри timer() и обращается к нашим полям (mTask, mTimerCmd).
+		// Ждём его выхода, иначе объект (а следом и задача-адресат) освободится
+		// у демона под руками: xTimerStop/xTimerDelete этого не гарантируют,
+		// они лишь ставят команду в очередь и возвращают управление сразу.
+		// Из самого демона (колбэк удаляет свой же таймер) ждать нельзя - deadlock.
+		if (xTimerGetTimerDaemonTaskHandle() != xTaskGetCurrentTaskHandle())
+		{
+			while (alive_in_callback(this))
+				vTaskDelay(1);
+		}
 		// Команды демону ставим в очередь с бесконечным ожиданием: таймаут в
 		// 1 тик при полной очереди команд оставлял таймер живым навсегда.
 		while (xTimerStop(mTimerHandle, portMAX_DELAY) != pdPASS)
@@ -119,12 +155,15 @@ void CSoftwareTimer::vTimerCallback(TimerHandle_t xTimer)
 	CSoftwareTimer *tm = (CSoftwareTimer *)pvTimerGetTimerID(xTimer);
 
 	// Объект мог быть удалён между истечением таймера и вызовом колбэка -
-	// проверяем по реестру живых таймеров, прежде чем разыменовывать.
-	if (!alive_check(tm))
+	// проверяем по реестру живых таймеров, прежде чем разыменовывать, и на
+	// время колбэка помечаем объект занятым (деструктор дождётся выхода).
+	if (!alive_enter_callback(tm))
 		return;
 
 	// Call the timer() method on the CSoftwareTimer object
 	tm->timer();
+
+	alive_exit_callback();
 }
 
 // Method to start the timer with a specified period and auto-reload mode

@@ -257,12 +257,15 @@ uint8_t *CBaseTask::allocNewMsg(STaskMessage *msg, uint16_t cmd, uint16_t size, 
 	msg->shortParam = size;
 
 #ifdef CONFIG_SPIRAM
-	// If PSRAM is configured and requested, allocate memory from PSRAM.
+	// heap_caps_malloc_prefer перебирает наборы флагов по порядку, поэтому предпочтение
+	// (PSRAM для больших тел сообщений, внутренняя память для остальных) сохраняется, но
+	// исчерпание одного пула больше не оставляет вызывающего с nullptr, пока есть второй.
+	// Тела сообщений читаются только из задач, так что PSRAM для них безопасна - в отличие
+	// от буферов под DMA и данных, к которым обращаются IRAM-обработчики прерываний.
 	if (psram)
-		msg->msgBody = heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+		msg->msgBody = heap_caps_malloc_prefer(size, 2, MALLOC_CAP_SPIRAM, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
 	else
-		// Otherwise, allocate from the default heap (likely DRAM).
-		msg->msgBody = heap_caps_malloc(size, MALLOC_CAP_DEFAULT);
+		msg->msgBody = heap_caps_malloc_prefer(size, 2, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT, MALLOC_CAP_SPIRAM);
 #else
 	// If PSRAM is not configured, allocate from the standard FreeRTOS heap.
 	msg->msgBody = pvPortMalloc(msg->shortParam);
