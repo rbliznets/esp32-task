@@ -93,6 +93,14 @@ static bool alive_in_callback(CSoftwareTimer *t)
 	return res;
 }
 
+/// Перевод миллисекунд в тики без переполнения.
+/// pdMS_TO_TICKS считает в TickType_t (32 бита): при configTICK_RATE_HZ = 1000 произведение
+/// ms * 1000 переполняется для периодов длиннее ~71.6 мин, и таймер срабатывает раньше срока.
+static inline TickType_t msToTicks(uint32_t ms)
+{
+	return (TickType_t)(((uint64_t)ms * (uint64_t)configTICK_RATE_HZ) / 1000U);
+}
+
 // Constructor for the CSoftwareTimer class
 CSoftwareTimer::CSoftwareTimer(uint8_t xNotifyBit, uint16_t timerCmd)
 {
@@ -170,7 +178,7 @@ void CSoftwareTimer::vTimerCallback(TimerHandle_t xTimer)
 int CSoftwareTimer::start(uint32_t period, bool autoRefresh)
 {
 	// Verify that the period is greater than 0
-	assert(pdMS_TO_TICKS(period) > 0);
+	assert(msToTicks(period) > 0);
 
 	// Stop the timer before starting with new parameters
 	stop();
@@ -183,7 +191,7 @@ int CSoftwareTimer::start(uint32_t period, bool autoRefresh)
 	vTimerSetReloadMode(mTimerHandle, autoRefresh);
 
 	// Change the timer's period to the specified value
-	if (xTimerChangePeriod(mTimerHandle, pdMS_TO_TICKS(period), 1) != pdTRUE)
+	if (xTimerChangePeriod(mTimerHandle, msToTicks(period), 1) != pdTRUE)
 	{
 		TRACE_ERROR("CSoftwareTimer:xTimerChangePeriod failed", (uint16_t)period);
 		return -2;
@@ -212,7 +220,7 @@ int CSoftwareTimer::start(CBaseTask *task, ETimerEvent event, uint32_t period, b
 	assert(task != nullptr);
 
 	// Verify that the period is greater than 0
-	assert(pdMS_TO_TICKS(period) > 0);
+	assert(msToTicks(period) > 0);
 
 	// Stop the timer before starting with new parameters
 	stop();
@@ -226,7 +234,7 @@ int CSoftwareTimer::start(CBaseTask *task, ETimerEvent event, uint32_t period, b
 	vTimerSetReloadMode(mTimerHandle, autoRefresh);
 
 	// Change the timer's period to the specified value
-	if (xTimerChangePeriod(mTimerHandle, pdMS_TO_TICKS(period), 1) != pdTRUE)
+	if (xTimerChangePeriod(mTimerHandle, msToTicks(period), 1) != pdTRUE)
 	{
 		TRACE_ERROR("CSoftwareTimer:xTimerChangePeriod failed", (uint16_t)period);
 		return -2;
