@@ -2,7 +2,7 @@
     \file
     \brief Class for initializing I2C in master mode.
     \authors Bliznets R.A. (r.bliznets@gmail.com)
-    \version 1.0.0.0
+    \version 1.0.1.0
     \date 11.11.2024
     \details This header file defines the I2CMaster class, which implements the Singleton pattern
              to manage I2C master resources (buses and devices) across the application.
@@ -14,6 +14,13 @@
 #pragma once
 #include "driver/i2c_master.h" // Include the ESP-IDF I2C master driver header
 #include "CLock.h"             // Include the custom lock mechanism header
+
+#ifndef I2C_PROBE_TIMEOUT_MS
+/// @brief Default timeout of I2CMaster::probe(), ms.
+/// @details An address phase takes well under 1 ms even at 100 kHz. ESP-IDF treats -1 as "wait forever",
+///          which hangs the caller (and every task waiting for the I2CMaster lock) when SDA/SCL are held low.
+#define I2C_PROBE_TIMEOUT_MS (50)
+#endif
 
 /// @brief Structure to hold state and handle for each I2C bus
 struct SI2CMaster
@@ -85,10 +92,13 @@ public:
 
     /// @brief Probe the I2C bus for a device at the given address.
     /// @details Checks if a device responds to the specified address on the bus.
+    ///          A timeout (as opposed to NACK) means the bus is busy or SDA/SCL are held low
+    ///          (missing pull-ups, unpowered device on the bus); it is logged as a warning.
     /// @param i2c_num The I2C bus number where the device should be located.
     /// @param address The 7-bit I2C address of the device to probe.
+    /// @param timeout_ms Probe timeout in ms (default I2C_PROBE_TIMEOUT_MS). -1 waits forever - not recommended.
     /// @return true if a device responded at the address, false otherwise or on error.
-    bool probe(int16_t i2c_num, uint16_t address);
+    bool probe(int16_t i2c_num, uint16_t address, int timeout_ms = I2C_PROBE_TIMEOUT_MS);
 
     /// @brief Add a device to the I2C bus and get its handle.
     /// @details This method creates an ESP-IDF device handle for a specific device on the bus.

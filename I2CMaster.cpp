@@ -2,7 +2,7 @@
     \file
     \brief Class for initializing I2C in master mode.
     \authors Bliznets R.A. (r.bliznets@gmail.com)
-    \version 1.0.0.0
+    \version 1.0.1.0
     \date 11.11.2024
     \details This class implements the Singleton pattern to manage I2C master resources
              across the application. It provides methods to initialize I2C buses, add
@@ -114,7 +114,7 @@ bool I2CMaster::take(int16_t i2c_num)
 }
 
 // Check for the presence of a device on the I2C bus
-bool I2CMaster::probe(int16_t i2c_num, uint16_t address)
+bool I2CMaster::probe(int16_t i2c_num, uint16_t address, int timeout_ms)
 {
     // Assert that the I2C bus number is valid
     assert(i2c_num >= 0 && i2c_num < I2C_NUM_MAX);
@@ -128,10 +128,16 @@ bool I2CMaster::probe(int16_t i2c_num, uint16_t address)
     // Check if the bus handle exists (bus is taken/active)
     if (m_i2c[i2c_num].count != 0)
     {
-        // Probe the I2C bus for a device at the given address using ESP-IDF API
-        esp_err_t err = i2c_master_probe(m_i2c[i2c_num].bus_handle, address, -1); // -1 for default timeout
-        unlock();                                                                 // Unlock access to the shared resource
-        return err == ESP_OK;                                                     // Return true if probe was successful (ESP_OK)
+        // Probe the I2C bus for a device at the given address using ESP-IDF API.
+        // The timeout is bounded: with -1 a stuck bus would block here forever while holding the lock.
+        esp_err_t err = i2c_master_probe(m_i2c[i2c_num].bus_handle, address, timeout_ms);
+        unlock(); // Unlock access to the shared resource
+        if (err == ESP_ERR_TIMEOUT)
+        {
+            // NACK gives ESP_ERR_NOT_FOUND; a timeout means the bus itself does not work
+            ESP_LOGW(TAG, "I2C%d probe 0x%02x timeout: bus busy or SDA/SCL held low", i2c_num, address);
+        }
+        return err == ESP_OK; // Return true if probe was successful (ESP_OK)
     }
     else
     {
