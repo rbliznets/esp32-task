@@ -182,7 +182,9 @@ public:
 	*/
 	inline void init(UBaseType_t queueLength = 30, BaseType_t coreID = 1)
 	{
-		CBaseTask::init("trace", 1024*2+512, 1, queueLength, coreID, true);
+		// 3,5 КБ: high-water mark 400 байт из 2,5 КБ — слишком малый запас
+		// для форматирования и вывода буферов, поэтому стек увеличен.
+		CBaseTask::init("trace", 3 * 1024 + 512, 1, queueLength, coreID, true);
 	};
 
 	/// Виртуальный метод трассировки
