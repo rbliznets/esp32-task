@@ -22,8 +22,18 @@
 // (if vTaskDelete is supported).
 void CBaseTask::vTask(void *pvParameters)
 {
+	CBaseTask *task = (CBaseTask *)pvParameters;
+#ifdef CONFIG_ESP_TASK_WDT_INIT
+	// Подписка на task watchdog: только задачи с ограниченным временем блокировки
+	if (task->mWdtSubscribe)
+		esp_task_wdt_add(nullptr);
+#endif
 	// Cast the parameter back to CBaseTask* and call the instance's run method.
-	((CBaseTask *)pvParameters)->run();
+	task->run();
+#ifdef CONFIG_ESP_TASK_WDT_INIT
+	if (task->mWdtSubscribe)
+		esp_task_wdt_delete(nullptr);
+#endif
 
 	// Delete the associated message queue after the task logic finishes.
 	vQueueDelete(((CBaseTask *)pvParameters)->mTaskQueue);
@@ -241,7 +251,10 @@ bool CBaseTask::getMessage(STaskMessage *msg, TickType_t xTicksToWait)
 	assert(msg != nullptr); // Ensure the message pointer is valid for receiving data.
 
 	// Attempt to receive a message from the queue.
-	return (xQueueReceive(mTaskQueue, msg, xTicksToWait) == pdTRUE);
+	const bool res = (xQueueReceive(mTaskQueue, msg, xTicksToWait) == pdTRUE);
+	// Каждая итерация цикла задачи начинается с этого вызова: сбрасываем watchdog
+	wdtReset();
+	return res;
 }
 
 // Allocates memory for the message body and initializes the message header.

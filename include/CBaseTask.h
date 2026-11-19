@@ -15,6 +15,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "sdkconfig.h"
+#ifdef CONFIG_ESP_TASK_WDT_INIT
+#include "esp_task_wdt.h"
+#endif
 
 #define MSG_END_TASK (0)        ///< Force task termination
 
@@ -58,6 +62,20 @@ protected:
 	/// Notification flag used with FreeRTOS task notifications.
 	/// If 0, task notifications are not used when sending messages.
 	uint32_t mNotify = 0;
+
+	/// Подписывать задачу на task watchdog (esp_task_wdt_add). Включается в init() наследника.
+	/// Задачи, блокирующиеся дольше CONFIG_ESP_TASK_WDT_TIMEOUT_S или бесконечно, подписывать нельзя.
+	/// Работает только если watchdog задач инициализирован (CONFIG_ESP_TASK_WDT_INIT), иначе флаг игнорируется.
+	bool mWdtSubscribe = false;
+
+	/// Сброс task watchdog из подписанной задачи (безопасно вызывать всегда).
+	inline void wdtReset()
+	{
+#ifdef CONFIG_ESP_TASK_WDT_INIT
+		if (mWdtSubscribe)
+			esp_task_wdt_reset();
+#endif
+	}
 
 	/// Static FreeRTOS task function.
 	/// @details This is the entry point function passed to FreeRTOS when creating the task.
